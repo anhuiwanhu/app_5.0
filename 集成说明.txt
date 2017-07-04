@@ -1,0 +1,21 @@
+补丁适用范围：
+
+ezOFFICE12.2产品(已集成补丁12.2 0.01）+ evo+(已集成补丁1.2 0.01）
+
+操作步骤：
+
+1、停evo服务
+
+2、备份程序、数据库
+
+3、覆盖程序补丁包到evo服务安装目录（d:\evo)
+
+4、删除..\webapps\ezOffice\WEB-INF\lib\jackson-mapper-lgpl-1.2.1.jar(已删的除跳过该步骤）
+   
+5、把文件夹..\webapps\ezOffice\res\default\ui下所有文件、文件夹拖入ui.zip(不要解压）
+
+6、连接evo+数据库执行升级脚本文件mysql.sql
+
+7、清除服务端缓存，启动evo服务
+
+8、验证系统功能
