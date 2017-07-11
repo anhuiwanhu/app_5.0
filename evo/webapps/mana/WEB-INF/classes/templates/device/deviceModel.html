@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="utf-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>设备管理-设备列表</title>
+    <link rel="shortcut icon" href="favicon.ico"/>
+</head>
+
+<body class="gray-bg">
+<table class="table table-hover table-bordered" width="100%" th:if="${#lists.isEmpty(devices)}">
+    <tr>暂无设备</tr>
+</table>
+<table class="table table-hover table-bordered" width="100%" th:if="!${#lists.isEmpty(devices)}">
+    <thead>
+    <tr>
+        <th>平台类型</th>
+        <th>设备Id</th>
+        <th>设备型号</th>
+        <th>系统版本</th>
+        <th>分辨率</th>
+        <th>应用版本</th>
+        <th>注册时间</th>
+        <!--<th>操作</th>-->
+    </tr>
+    </thead>
+    <tbody th:each="device:${devices}">
+    <tr>
+        <th th:text="${!device.existType()} ? '空' : ${device.platformType.value}">平台类型</th>
+        <th th:text="${device.deviceId}">设备Id</th>
+        <th th:text="${device.model}">设备型号</th>
+        <th data-toggle="true" th:text="${device.versionCode}">系统版本</th>
+        <th th:text="${device.screenSize}">分辨率</th>
+        <th th:text="${device.clientVersionCode}">应用版本</th>
+        <th th:text="${#calendars.format(device.createdDate,'yyyy-MM-dd HH:mm')}">注册时间</th>
+        <!--<th>-->
+            <!--<a href='javascript:void(0);' title='删除' style='cursor:pointer'>-->
+                <!--<i class='glyphicon glyphicon-trash'></i>-->
+            <!--</a>-->
+        <!--</th>-->
+    </tr>
+    </tbody>
+</table>
+
+</body>
+
+</html>

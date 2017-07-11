@@ -19,3 +19,34 @@ ezOFFICE12.2产品(已集成补丁12.2 0.01）+ evo+(已集成补丁1.2 0.01）
 7、清除服务端缓存，启动evo服务
 
 8、验证系统功能
+
+
+
+
+
+
+
+
+
+补丁适用范围：
+
+ezOFFICE12.2产品(已集成补丁12.2 0.03）+ evo+(已集成补丁1.2 0.02）
+
+操作步骤：
+
+1、停evo服务
+
+2、备份程序、数据库
+
+3、覆盖程序补丁包到evo服务安装目录（d:\evo)
+
+4、修改..\webapps\mana\WEF-INF\classes\application
+   文件中spring.datasource.url=jdbc:mysql://localhost:3328/newmana?           useUnicode=true&characterEncoding=utf8数据库端口为生产环境的实际端口
+
+5、把文件夹..\webapps\ezOffice\res\default\ui下所有文件、文件夹拖入ui.zip(不要解压）
+
+6、分别连evo+、OA数据库执行sql文件夹下数据库脚本文件
+
+7、清除服务端缓存，启动evo服务
+
+8、验证系统功能

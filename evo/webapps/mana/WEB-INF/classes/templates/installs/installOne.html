@@ -1,0 +1,65 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=4.0, user-scalable=no">
+    <title>客户端下载</title>
+    <link type="text/css" rel="stylesheet" th:href="@{/static/css/pro.css}"/>
+    <script type="text/javascript" th:src="@{/static/js/jquery.min.js}"></script>
+</head>
+<script type="text/javascript">
+//    function installTwo(appCode,type,approveFlag,index){
+//        if(approveFlag == 0){
+//            alert("该应用为子应用，无法下载!");
+//        }else{
+//            if(type == "android"){
+//                window.location = "/mana/a/"+$("#version_"+index).val()+"/"+appCode+"/version_down";
+//            }else if(type == "ios"){
+//                window.location = "/mana/a/"  + appCode +"/"+type+ "/versionList";
+//            }
+//            //   window.location =" /mana/a/"+"/"+"/"+"version_down";
+//        }
+//    }
+
+    $(function(){
+
+        var isOpenTip = is_weixin();
+        if(isOpenTip){
+            /*	$('#subBg').show();
+             $('#subBg').click(function(){
+             $(this).hide();
+             });  */
+            document.getElementById("bodyId").className="point";
+            $(".point-img").css("display","block");
+            $(".container").css("display","none");
+        }else{
+            $(".point-img").css("display","none");
+            $(".container").css("display","block");
+            document.getElementById("bodyId").className="android";
+            //	$("bodyId").css("background","");
+            //	$("content").css("background","url(../images/download/bg.png)");
+        }
+    })
+
+    //判断是否微信
+    function is_weixin(){
+        var ua = navigator.userAgent.toLowerCase();
+        if(ua.match(/MicroMessenger/i)=="micromessenger") {
+            return true;
+        } else {
+            return false;
+        }
+    }
+</script>
+<body class="" id="bodyId">
+<div id="content" class="container" style="display:none">
+    <!--  <header>
+            <div class="head"><img src="/mana/static/PCload/logo1.png"></div>
+          </header>  -->
+    <footer style="bottom:2rem;">
+        <div class="foot"><a th:href="@{/service/d/v3/installVersionTwo(type=${type})}" style="font-size:1.5rem;width:30%;padding:1rem;">安装app</a></div>
+    </footer>
+</div>
+<div class="point-img" id="subBg" style="display:none"><img th:src="@{/static/img/wxQRCodeT.png}"></div>
+</body>
+</html>

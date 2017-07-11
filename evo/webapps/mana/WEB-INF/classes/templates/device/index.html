@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="utf-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>设备管理-设备列表</title>
+    <link rel="shortcut icon" href="favicon.ico"/>
+    <link th:href="@{/static/css/bootstrap.min.css}" rel="stylesheet"/>
+    <link th:href="@{/static/css/font-awesome.min.css}" rel="stylesheet"/>
+    <link th:href="@{/static/css/plugins/iCheck/custom.css}" rel="stylesheet"/>
+    <link th:href="@{/static/css/animate.min.css}" rel="stylesheet"/>
+    <link th:href="@{/static/css/style.min.css}" rel="stylesheet"/>
+    <script th:src="@{/static/js/jquery.min.js}"></script>
+    <script th:src="@{/static/js/bootstrap.min.js}"></script>
+    <script th:src="@{/static/js/bootstrap-paginator.js}"></script>
+    <script th:src="@{/static/js/plugins/iCheck/icheck.min.js}"></script>
+    <script th:src="@{/static/js/content.min.js}"></script>
+    <script th:src="@{/static/js/plugins/messager/jquery.messager.min.js}"></script>
+    <script th:src="@{/static/js/plugins/layers/layer.js}"></script>
+    <script th:src="@{/static/js/plugins/ajaxfileupload/ajaxfileupload.js}"></script>
+    <style>
+        .text-page-span-con{
+            display: inline-block;
+            padding-left: 0;
+            margin: 20px 0;
+            border-radius: 4px;
+        }
+    </style>
+    <script th:inline="javascript">
+        var pageCount = [[${pageCount}]];
+        var numberOfPages = [[${numberOfPages}]];
+        var checkPage = [[${checkPage}]];
+        function bootPage() {
+            if(!checkPage){
+                return;
+            }
+            $("#pageBar").bootstrapPaginator({
+                bootstrapMajorVersion: 3,
+                currentPage: 1,
+                totalPages: pageCount,
+                numberOfPages: numberOfPages,
+                useBootstrapTooltip: true,
+                itemContainerClass: function (type, page, current) {
+                    return (page === current) ? "active" : "pointer-cursor";
+                },
+                onPageChanged: function (event, oldPage, newPage) {　　// 页面改变时事件
+                    var page = newPage;
+                    $("#deviceTable").empty();
+                    var url = /*[[@{/manager/device/pageQueryDevice?page=}]]*/ "";
+                    $("#deviceTable").load(url+page);
+                }
+            });
+        }
+        $(function () {
+            bootPage();
+            $("#deviceTable").empty();
+            $("#deviceTable").load(/*[[@{/manager/device/pageQueryDevice?page=1}]]*/ "");
+
+            $("#btn_search").click(function () {
+                var enDeviceId = $("#enDeviceId").val();
+                if (enDeviceId) {
+                    $("#pageRow").empty();
+                    $("#deviceTable").empty();
+                    var url = /*[[@{/manager/device/queryDevice?enDeviceId=}]]*/ "";
+                    $("#deviceTable").load(url+enDeviceId);
+                } else {
+                    window.location.reload();
+                }
+            })
+        })
+    </script>
+</head>
+
+<body class="gray-bg">
+<div class="wrapper wrapper-content animated fadeInRight">
+    <div class="row">
+        <div class="col-sm-12">
+            <div class="ibox float-e-margins">
+                <a class="collapse-link">
+                    <div class="ibox-title">
+                        <h5>
+                            设备列表
+                            <small> &nbsp;&nbsp;&nbsp;--正在使用的设备信息</small>
+                        </h5>
+                        <div class="ibox-tools">
+                            <i class="fa fa-chevron-up"></i>
+                        </div>
+                    </div>
+                </a>
+                <div class="ibox-content">
+                    <div class="row">
+                        <div class="col-sm-12">
+                            <form role="form" class="form-inline col-sm-12">
+                                <div class="form-group col-md-3">
+                                    <select class="form-control"
+                                            name="platformcode" id="platformcode">
+                                        <option value="">全部平台类型</option>
+                                    </select>
+                                </div>
+                                <div class="form-group col-md-4">
+                                    <label>设备ID</label>
+                                    <input type="text" placeholder="请输入设备ID" class="form-control dim" name="enDeviceId" id="enDeviceId"/>
+                                </div>
+                                <div class="form-group col-md-4">
+                                    <button class="btn btn-primary" type="button" id="btn_search">查询</button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-sm-12">
+            <div class="ibox-content">
+                <div id="deviceTable"></div>
+                <div class="form-horizontal" id="pageRow">
+                    <label class="col-sm-2 control-label text-page-span-con"></label>
+                    <ul id="pageBar"></ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+</body>
+
+</html>

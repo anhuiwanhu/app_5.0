@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/error}">
+<head>
+    <title>HTTP 400错误的请求</title>
+</head>
+<body>
+<div layout:fragment="content">
+    <p style="font-size: 26px;font-weight: bolder;position: relative;">（HTTP 400）您提交的数据有错误~</p>
+    <p style="font-size: 20px;">可能原因：提交的表单数据格式有错误。</p>
+    <p style="font-size: 18px;">建议操作：</p>
+    <p style="font-size: 18px;">1、请检查提交的数据格式是否正确</p>
+    <p style="font-size: 18px;">2、<a href="#" onclick="history.back()">返回重试</a>或<a th:href="@{/}">返回首页</a></p>
+</div>
+</body>
+</html>

@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="utf-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>应用管理-应用信息</title>
+    <link rel="shortcut icon" href="favicon.ico"/>
+    <link th:href="@{/static/css/bootstrap.min.css}" rel="stylesheet"/>
+    <link th:href="@{/static/css/font-awesome.min.css}" rel="stylesheet"/>
+    <link th:href="@{/static/css/plugins/iCheck/custom.css}" rel="stylesheet"/>
+    <link th:href="@{/static/css/animate.min.css}" rel="stylesheet"/>
+    <link th:href="@{/static/css/style.min.css}" rel="stylesheet"/>
+    <link th:href="@{/static/css/liveValidation.css}" rel="stylesheet"/>
+    <script th:src="@{/static/js/jquery.min.js}"></script>
+    <script th:src="@{/static/js/bootstrap.min.js}"></script>
+    <script th:src="@{/static/js/plugins/iCheck/icheck.min.js}"></script>
+    <script th:src="@{/static/js/content.min.js}"></script>
+    <script th:src="@{/static/js/plugins/messager/jquery.messager.min.js}"></script>
+    <script th:src="@{/static/js/plugins/layers/layer.js}"></script>
+    <script th:src="@{/static/js/plugins/ajaxfileupload/ajaxfileupload.js}"></script>
+    <script th:src="@{/static/js/livevalidation.js}"></script>
+</head>
+<body class="gray-bg">
+<div class="wrapper wrapper-content animated fadeInRight">
+    <div class="row">
+        <div class="col-sm-12">
+            <div class="ibox float-e-margins">
+                <a class="collapse-link">
+                    <div class="ibox-title">
+                        <h5>
+                            上传app
+                            <small> &nbsp;&nbsp;&nbsp;--请前往imagjs.com打包应用，并且发布。然后上传zip文件</small>
+                        </h5>
+                        <div class="ibox-tools">
+                            <i class="fa fa-chevron-up"></i>
+                        </div>
+                    </div>
+                </a>
+                <div class="ibox-content">
+                    <div class="row">
+                        <div class="col-sm-12">
+                            <form role="form" class="form-inline col-sm-12">
+                                <div class="form-group col-md-4">
+                                    <a style="margin-left: 30px" class="btn btn-primary" id="modal"
+                                       role="button" data-toggle="modal">
+                                        点击上传app
+                                    </a>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <form class="form-horizontal"
+          method="post" target="lice-form">
+        <div class="row">
+            <div class="col-sm-12">
+                <div class="ibox float-e-margins" th:if="!${#lists.isEmpty(app)}">
+                    <div class="ibox-title">
+                        <h3>
+                            <span>应用信息</span>
+                            <a style="margin-left: 80%" class="btn btn-primary" id="modalAppSet"
+                               role="button" data-toggle="modal">
+                                应用设置
+                            </a>
+                        </h3>
+                    </div>
+                    <div class="ibox-content">
+                        <div class="container">
+                            <div class="form-group">
+                                <label class="col-sm-2 control-label">应用编码:</label>
+                                <div class="col-sm-4">
+                                    <span class="form-control" style="border: 0" th:text="${app.code}">port</span>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label class="col-sm-2 control-label">应用名称:</label>
+                                <div class="col-sm-4">
+                                    <span class="form-control" style="border: 0" th:text="${app.name}">port</span>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label class="col-sm-2 control-label">应用描述:</label>
+                                <div class="col-sm-4">
+                                    <span class="form-control" style="border: 0" th:text="${app.memo}">port</span>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label class="col-sm-2 control-label">创建日期:</label>
+                                <div class="col-sm-4">
+                                    <span class="form-control" style="border: 0"
+                                          th:text="${#calendars.format(app.createdDate,'yyyy-MM-dd HH:mm')}">port</span>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label class="col-sm-2 control-label">apiKey:</label>
+                                <div class="col-sm-4">
+                                    <span class="form-control" style="border: 0"
+                                          th:text="${app.apiKey}">apiKey</span>
+                                </div>
+                            </div>
+                            <!--<div class="form-group">-->
+                                <!--<label class="col-sm-2 control-label">下载:</label>-->
+                                <!--<div class="col-sm-4">-->
+                                    <!--<a style="margin-left: 5%" class="btn btn-primary" th:href="@{/manager/app/appDownload}">-->
+                                        <!--应用下载-->
+                                    <!--</a>-->
+                                <!--</div>-->
+                            <!--</div>-->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </form>
+    <div id="uploadFileModel"></div>
+    <div id="updateAppInfo"></div>
+    <script th:inline="javascript">
+        $(function () {
+
+            $("#modal").click(function () {
+                $("#uploadFileModel").empty();
+                $("#uploadFileModel").load(/*[[@{/manager/app/upload}]]*/ "");
+            })
+            $("#modalAppSet").click(function () {
+                $("#updateAppInfo").empty();
+                $("#updateAppInfo").load(/*[[@{/manager/app/appSet}]]*/ "");
+            })
+        })
+
+    </script>
+</div>
+
+</body>
+</html>

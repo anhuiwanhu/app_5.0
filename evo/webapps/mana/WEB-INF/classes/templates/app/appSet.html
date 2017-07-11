@@ -1,0 +1,451 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="utf-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>应用管理-设置应用</title>
+    <link rel="shortcut icon" href="favicon.ico"/>
+    <link th:href="@{/static/css/bootstrap.min.css}" rel="stylesheet"/>
+    <link th:href="@{/static/css/font-awesome.min.css}" rel="stylesheet"/>
+    <link th:href="@{/static/css/plugins/iCheck/custom.css}" rel="stylesheet"/>
+    <link th:href="@{/static/css/animate.min.css}" rel="stylesheet"/>
+    <link th:href="@{/static/css/style.min.css}" rel="stylesheet"/>
+    <link th:href="@{/static/css/liveValidation.css}" rel="stylesheet"/>
+    <script th:src="@{/static/js/jquery.min.js}"></script>
+    <script th:src="@{/static/js/bootstrap.min.js}"></script>
+    <script th:src="@{/static/js/plugins/iCheck/icheck.min.js}"></script>
+    <script th:src="@{/static/js/content.min.js}"></script>
+    <script th:src="@{/static/js/plugins/messager/jquery.messager.min.js}"></script>
+    <script th:src="@{/static/js/plugins/layers/layer.js}"></script>
+    <script th:src="@{/static/js/plugins/ajaxfileupload/ajaxfileupload.js}"></script>
+    <script th:src="@{/static/js/livevalidation.js}"></script>
+    <style>
+        .form-foot-appSet-modal {
+            padding: 15px;
+            text-align: right;
+            border-top: 1px solid #e5e5e5;
+        }
+
+        .classify-nav-push {
+            display: inline-block;
+            border-radius: 6px;
+        }
+
+        .app-classify-menu-push {
+            border: 1px solid #1ab394;
+            margin-top: 7px;
+        }
+
+        .classify-nav-push li {
+            float: left;
+            padding: 0 24px;
+            text-align: center;
+            line-height: 24px;
+            color: #1ab394;
+        }
+
+        .common-check-push {
+            color: #fff !important;
+            background-color: #1ab394;
+        }
+
+        ul {
+            padding: 0px;
+        }
+
+        ul li {
+            list-style: none;
+            cursor: pointer;
+        }
+        .div-push-all-check-hide{
+            display: none
+        }
+    </style>
+    <script th:inline="javascript">
+        $(function () {
+            var typeCheckIos = $("#typeCheck").val();
+            $("#myModal6").modal("show");
+
+//            $("#setAppSub").click(function () {
+//                var ardHomeUrl  = $("#ardHomeUrl").val();
+//                var ardResUrl = $("#ardResUrl").val();
+//                var iosHomeUrl = $("#iosHomeUrl").val();
+//                var iosResUrl = $("#iosResUrl").val();
+//                if (ardHomeUrl && ardResUrl) {
+//                    $('#androidForm').submit();
+//                }
+//                if (iosHomeUrl && iosResUrl) {
+//                    $('#iosForm').submit();
+//                }
+//
+//            });
+
+            $("#fileInput").change(function () {
+                $("#fileText").val($("#fileInput").val());
+            });
+
+            $("#allActiveCheck li").click(function () {
+                if (typeCheckIos == 'ios') {
+                    return;
+                }
+                var index = $(this).index();
+                if (index == 0) {
+                    $("#typeCheck").val("android");
+                } else if (index == 1) {
+                    $("#typeCheck").val("ios");
+                }
+            });
+        })
+
+//        $(function () {
+//            var androidCheck = [[${androidCheck} ? true : false]];
+//            var iosCheck = [[${iosCheck} ? true : false]];
+//            if (androidCheck) {
+//                var ardHomeUrlValidation = new LiveValidation("ardHomeUrl", {
+//                    onlyOnBlur: true,
+//                    validMessage: ' ',
+//                    onsubmit: true
+//                });
+//                ardHomeUrlValidation.add(Validate.Presence, {failureMessage: "入口地址不能为空"});
+//
+//                var ardResUrlValidation = new LiveValidation("ardResUrl", {
+//                    onlyOnBlur: true,
+//                    validMessage: ' ',
+//                    onsubmit: true
+//                });
+//                ardResUrlValidation.add(Validate.Presence, {failureMessage: "资源地址不能为空"});
+//            }
+//
+//            if (iosCheck) {
+//                var iosHomeUrlValidation = new LiveValidation("iosHomeUrl", {
+//                    onlyOnBlur: true,
+//                    validMessage: ' ',
+//                    onsubmit: true
+//                });
+//                iosHomeUrlValidation.add(Validate.Presence, {failureMessage: "入口地址不能为空"});
+//
+//                var iosResUrlValidation = new LiveValidation("iosResUrl", {
+//                    onlyOnBlur: true,
+//                    validMessage: ' ',
+//                    onsubmit: true
+//                });
+//                iosResUrlValidation.add(Validate.Presence, {failureMessage: "资源地址不能为空"});
+//
+////                var fileTextValidation = new LiveValidation("fileText", {
+////                    onlyOnBlur: true,
+////                    validMessage: ' ',
+////                    onsubmit: true
+////                });
+////                fileTextValidation.add(Validate.Presence, {failureMessage: "cert文件不能为空"});
+////                fileTextValidation.add(Validate.Inclusion, {
+////                    within: ['\.p12'],
+////                    partialMatch: true,
+////                    failureMessage: "必需添加 .p12 图片文件"
+////                });
+////
+////                var certPasswordValidation = new LiveValidation("certPassword", {
+////                    onlyOnBlur: true,
+////                    validMessage: ' ',
+////                    onsubmit: true
+////                });
+////                certPasswordValidation.add(Validate.Presence, {failureMessage: "cert密码不能为空"});
+//
+//            }
+//        })
+
+        function setIosJPush() {
+            $('#iosPushType').val('jPush');
+            $('#iosJPushAllDiv').show();
+            $('#iosApnsAllDiv').hide();
+        }
+
+        function setIosApns() {
+            $('#iosPushType').val('apns');
+            $('#iosJPushAllDiv').hide();
+            $('#iosApnsAllDiv').show();
+        }
+
+        function setArdJPush() {
+            $('#ardPushType').val('jPush');
+            $('#ardJPushAllDiv').show();
+            $('#ardBPushAllDiv').hide();
+        }
+
+        function setArdBPush() {
+            $('#ardPushType').val('bPush');
+            $('#ardBPushAllDiv').show();
+            $('#ardJPushAllDiv').hide();
+        }
+
+        $(function () {
+            $("#checkPushIos li").click(function () {
+                $(this).addClass("common-check-push").siblings().removeClass("common-check-push");
+                var index = $(this).index();
+                if (index == 0) {
+                    setIosJPush();
+                } else {
+                    setIosApns();
+                }
+            });
+
+            $("#checkPushArd li").click(function () {
+                $(this).addClass("common-check-push").siblings().removeClass("common-check-push");
+                var index = $(this).index();
+                if (index == 0) {
+                    setArdJPush();
+                } else {
+                    setArdBPush();
+                }
+            });
+        })
+
+        $(function () {
+            var checkPushTypeArd =  [[${androidCheck} ? ${#lists.isEmpty(androidAppPlatform.pushType) ? ' ' : androidAppPlatform.pushType.value} : ' ']];
+            var checkPushTypeIos =  [[${iosCheck} ? ${#lists.isEmpty(iosAppPlatform.pushType) ? ' ' : iosAppPlatform.pushType.value} : ' ']];
+            if (checkPushTypeArd != ' ') {
+                if (checkPushTypeArd == 'jPush') {
+                    setArdJPush();
+                } else if (checkPushTypeArd == 'bPush') {
+                    setArdBPush();
+                }
+            } else {
+                setArdJPush();
+            }
+            if (checkPushTypeIos != ' ') {
+                if (checkPushTypeIos == 'jPush') {
+                    setIosJPush();
+                }
+                if (checkPushTypeIos == 'apns') {
+                    setIosApns();
+                }
+            } else {
+                setIosJPush();
+            }
+//
+        })
+    </script>
+</head>
+
+<body class="gray-bg">
+<div class="wrapper wrapper-content animated fadeInRight">
+    <!-- 上传应用 -->
+    <div class="modal inmodal fade" id="myModal6" tabindex="-1"
+         role="dialog" aria-hidden="true" data-backdrop="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <form id="androidForm" th:action="@{/manager/app/setAllApp}"
+                      enctype="multipart/form-data" role="form"
+                      method="post">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal">
+                        <span aria-hidden="true">&times;</span><span class="sr-only">Close</span>
+                    </button>
+                    <h3 class="modal-title">应用设置</h3>
+                    <!--<small class="font-bold">设置该应用的相关信息</small>-->
+                </div>
+                <div class="modal-body" style="text-align: center;">
+                    <div class="container-fluid">
+                        <div class="row-fluid">
+                            <div class="span12">
+                                <div class="tabbable">
+                                    <ul class="nav nav-tabs" id="allActiveCheck">
+                                        <li th:if="${androidCheck}" th:classappend="${androidCheck} ? 'active' : ''">
+                                            <a data-toggle="tab" href="#panel-android">android</a>
+                                        </li>
+                                        <li th:if="${iosCheck}" th:classappend="${androidCheck} ? '' : 'active'">
+                                            <a data-toggle="tab" href="#panel-ios">ios</a>
+                                        </li>
+                                    </ul>
+                                    <div class="tab-content container">
+
+                                        <div th:if="${androidCheck}" class="tab-pane"
+                                             th:classappend="${androidCheck} ? 'active' : ''" id="panel-android">
+                                           <div class="form-horizontal">
+                                                <div class="form-group" style="margin-top: 15px">
+                                                    <label class="col-sm-2 control-label">入口地址:</label>
+                                                    <div class="col-sm-4">
+                                                        <input th:value="${androidAppPlatform.homeUrl}" type="text"
+                                                               id="ardHomeUrl" name="homeUrl" class="form-control"/>
+                                                    </div>
+                                                </div>
+                                                <div class="form-group">
+                                                    <label class="col-sm-2 control-label">资源地址:</label>
+                                                    <div class="col-sm-4">
+                                                        <input th:value="${androidAppPlatform.resUrl}" type="text"
+                                                               id="ardResUrl" name="resUrl" class="form-control"/>
+                                                    </div>
+                                                </div>
+                                                <div class="form-group" style="margin-bottom: 0">
+                                                    <hr class="col-sm-6"
+                                                        style="FILTER: alpha(opacity=100,finishopacity=0,style=1)"
+                                                        color=#E5E5E5 SIZE=3/>
+                                                </div>
+                                                <input th:if="${!androidAppPlatform.existPushType()}" type="hidden" value="jPush" name="ardPushType" id="ardPushType"/>
+                                                <input th:if="${androidAppPlatform.existPushType()}" type="hidden" th:value="${androidAppPlatform.pushType.value}" name="ardPushType" id="ardPushType"/>
+                                                <div class="form-group">
+                                                    <label class="col-sm-2 control-label">推送类型:</label>
+                                                    <div class="col-sm-4">
+                                                        <ul th:if="${!androidAppPlatform.existPushType()}" id="checkPushArd" class="classify-nav-push app-classify-menu-push">
+                                                            <li class="common-check-push">极光推送</li>
+                                                            <li>百度推送</li>
+                                                        </ul>
+                                                        <ul th:if="${androidAppPlatform.existPushType()}" id="checkPushArd" class="classify-nav-push app-classify-menu-push">
+                                                            <li th:classappend="${androidAppPlatform.pushType.value == 'jPush' } ? 'common-check-push' : ''">极光推送</li>
+                                                            <li th:classappend="${androidAppPlatform.pushType.value == 'bPush' } ? 'common-check-push' : ''">百度推送</li>
+                                                        </ul>
+                                                    </div>
+                                                </div>
+                                                <div id="ardJPushAllDiv">
+                                                    <div class="form-group" style="margin-top: 15px">
+                                                        <label class="col-sm-2 control-label">极光推送appKey:</label>
+                                                        <div class="col-sm-4">
+                                                            <input th:value="${androidAppPlatform.appKey}" type="text"
+                                                                   id="ardAppKey" name="appKey" class="form-control"/>
+                                                        </div>
+                                                    </div>
+                                                    <div class="form-group">
+                                                        <label class="col-sm-2 control-label">极光推送masterSecret:</label>
+                                                        <div class="col-sm-4">
+                                                            <input th:value="${androidAppPlatform.masterSecret}"
+                                                                   type="text"
+                                                                   id="ardMasterSecret" name="masterSecret"
+                                                                   class="form-control"/>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div id="ardBPushAllDiv">
+                                                    <div class="form-group">
+                                                        <label class="col-sm-2 control-label">百度推送apiKey:</label>
+                                                        <div class="col-sm-4">
+                                                            <input th:value="${androidAppPlatform.apiKey}" type="text"
+                                                                   id="apiKey" name="apiKey" class="form-control"/>
+                                                        </div>
+                                                    </div>
+                                                    <div class="form-group">
+                                                        <label class="col-sm-2 control-label">百度推送secretKey:</label>
+                                                        <div class="col-sm-4">
+                                                            <input th:value="${androidAppPlatform.secretKey}"
+                                                                   type="text"
+                                                                   id="secretKey" name="secretKey"
+                                                                   class="form-control"/>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div th:if="${iosCheck}" class="tab-pane" id="panel-ios"
+                                             th:classappend="${androidCheck} ? '' : 'active'">
+                                                <div class="form-horizontal">
+                                                <div class="form-group" style="margin-top: 15px">
+                                                    <label class="col-sm-2 control-label">入口地址:</label>
+                                                    <div class="col-sm-4">
+                                                        <input th:value="${iosAppPlatform.homeUrl}" type="text"
+                                                               id="iosHomeUrl" name="iosHomeUrl" class="form-control"/>
+                                                    </div>
+                                                </div>
+                                                <div class="form-group">
+                                                    <label class="col-sm-2 control-label">资源地址:</label>
+                                                    <div class="col-sm-4">
+                                                        <input th:value="${iosAppPlatform.resUrl}" type="text"
+                                                               id="iosResUrl" name="iosResUrl" class="form-control"/>
+                                                    </div>
+                                                </div>
+                                                <div class="form-group" style="margin-bottom: 0">
+                                                    <hr class="col-sm-6"
+                                                        style="FILTER: alpha(opacity=100,finishopacity=0,style=1)"
+                                                        color=#E5E5E5 SIZE=3/>
+                                                </div>
+                                                <input th:if="${!iosAppPlatform.existPushType()}" type="hidden" value="jPush" name="iosPushType" id="iosPushType"/>
+                                                <input th:if="${iosAppPlatform.existPushType()}" type="hidden" th:value="${iosAppPlatform.pushType.value }" name="iosPushType" id="iosPushType"/>
+                                                <div class="form-group">
+                                                    <label class="col-sm-2 control-label">推送类型:</label>
+                                                    <div class="col-sm-4">
+                                                        <ul th:if="${!iosAppPlatform.existPushType()}" id="checkPushIos" class="classify-nav-push app-classify-menu-push">
+                                                            <li class="common-check-push">极光推送</li>
+                                                            <li>APNS推送</li>
+                                                        </ul>
+                                                        <ul th:if="${iosAppPlatform.existPushType()}" id="checkPushIos" class="classify-nav-push app-classify-menu-push">
+                                                            <li th:classappend="${iosAppPlatform.pushType.value == 'jPush' } ? 'common-check-push' : ''">极光推送</li>
+                                                            <li th:classappend="${iosAppPlatform.pushType.value == 'apns' } ? 'common-check-push' : ''">APNS推送</li>
+                                                        </ul>
+                                                    </div>
+                                                </div>
+                                                <div id="iosJPushAllDiv">
+                                                    <div class="form-group" style="margin-top: 15px">
+                                                        <label class="col-sm-2 control-label">极光推送appKey:</label>
+                                                        <div class="col-sm-4">
+                                                            <input th:value="${iosAppPlatform.appKey}" type="text"
+                                                                   id="iosAppKey" name="iosAppKey" class="form-control"/>
+                                                        </div>
+                                                    </div>
+                                                    <div class="form-group">
+                                                        <label class="col-sm-2 control-label">极光推送masterSecret:</label>
+                                                        <div class="col-sm-4">
+                                                            <input th:value="${iosAppPlatform.masterSecret}" type="text"
+                                                                   id="iosMasterSecret" name="iosMasterSecret"
+                                                                   class="form-control"/>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div id="iosApnsAllDiv">
+                                                    <div class="form-group">
+                                                        <label class="col-sm-2 control-label">iOS证书:</label>
+                                                        <div class="col-sm-4">
+                                                            <div class="input-group" id="appform">
+                                                                <input type="file" style="display: none;" id="fileInput"
+                                                                       name="file"/>
+                                                                <input th:value="${iosAppPlatform.certFilePath}"
+                                                                       type="text"
+                                                                       class="form-control" readonly="readonly"
+                                                                       id="fileText"/>
+                                                                <label for="fileInput"
+                                                                       class="btn btn-success input-group-addon">
+                                                                <span>
+                                                                    <i class="fa fa-folder-open"></i>选择文件
+                                                                </span>
+                                                                </label>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                    <div class="form-group">
+                                                        <label class="col-sm-2 control-label">iOS证书密码:</label>
+                                                        <div class="col-sm-4">
+                                                            <input th:value="${iosAppPlatform.certPassword}"
+                                                                   type="password"
+                                                                   id="certPassword" name="certPassword"
+                                                                   class="form-control"/>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <div class="sk-spinner sk-spinner-wave" id="loading" style="display: none;">
+                        <div class="sk-rect1"></div>
+                        <div class="sk-rect2"></div>
+                        <div class="sk-rect3"></div>
+                        <div class="sk-rect4"></div>
+                        <div class="sk-rect5"></div>
+                        <p>上传中...</p>
+                    </div>
+                    <div id="btns">
+                        <input type="hidden" id="typeCheck" th:value="${androidCheck} ? 'android' : 'ios'"/>
+                        <button type="button" class="btn btn-white" data-dismiss="modal"
+                                id="colsemodal">关闭
+                        </button>
+                        <button type="submit" id="setAppSub" class="btn btn-primary">保存</button>
+                    </div>
+                </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+</body>
+</html>

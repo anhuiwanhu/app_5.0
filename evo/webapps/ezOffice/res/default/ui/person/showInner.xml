@@ -1,0 +1,372 @@
+<?xml version="1.0" encoding="utf-8"?>
+<imag>
+    <script>
+    <![CDATA[
+        var storage = $phone.localStorage();
+		var evoUrl = storage.getItem('evoUrl');
+		var linkManId = storage.getItem('inner_userId');
+		var webServiceUrl = storage.getItem('picPath');
+		var selectName = '';
+        $page.onload = function() {
+            initInfo();
+        }
+        
+        function initInfo(){
+            $http.progress({src:'loading.gif',text:''}).post(evoUrl+'/ezOffice/contacts/showInner.do', {linkManId :linkManId},function(data) {
+                 if(data){
+                 	 var obj = JSON.parse(data);
+                 	 if(obj.logonerror &&obj.logonerror=='1'){
+		     		     alert("该账号已在设备"+obj.deviceId+"上登录");
+		     		     $page.open('../index.xml',{target:'_self'});
+		                 return;
+		             }
+                 	 var contactXml = obj.contactXml;
+                 	 var serveUrl = obj.serveUrl;
+                 	 if(contactXml.message.result == "1"){
+                 	        var dataJson = contactXml.data;
+                 	        var EmpLivingPhoto = dataJson.EmpLivingPhoto;
+		                    if(EmpLivingPhoto!=null&&EmpLivingPhoto!=""){
+						    	$('EmpLivingPhoto').src = webServiceUrl + EmpLivingPhoto;
+						    }
+						    
+						    var EmpDepart = dataJson.EmpDepart;
+						    var EmpName = dataJson.EmpName;
+						    selectName = EmpName;
+						    if(EmpDepart == "" || EmpDepart==null){
+						        $('departAndName').text = EmpName;
+						    }else{
+						        $('departAndName').text = EmpDepart + "·" + EmpName;
+						    }
+						    var EmpDuty = dataJson.EmpDuty; //联系人职务
+						    if(EmpDuty!=null&&EmpDuty!=""){
+						        $('EmpDuty').text = EmpDuty;
+						    }
+						    var EmpMobilePhone = dataJson.EmpMobilePhone; //联系人手机
+						    var EmpMobilePhone2 = dataJson.EmpMobilePhone2;
+						    if(EmpMobilePhone2!=null){
+						    	EmpMobilePhone = EmpMobilePhone +";"+ EmpMobilePhone2;
+						    }
+						    if(EmpMobilePhone==null||EmpMobilePhone==""){
+						        EmpMobilePhone = "";
+						        $('EmpMobilePhone').text = EmpMobilePhone;
+						        $('EmpMobilePhone').css('display','none');
+						        $('EmpMobileSmsIcon1').css('display','none');
+						        $('EmpMobilePhoneIcon1').css('display','none');
+						    }else{
+						        $('EmpMobilePhone').text = EmpMobilePhone;
+						    }
+						    
+						    var EmpPhone = dataJson.EmpPhone;            //联系人住宅电话
+						    if(EmpPhone == null||EmpPhone == ""){
+						        EmpPhone = "";
+						        $('EmpPhone').text = EmpPhone;
+						        $('EmpPhone').css('display','none');
+						        $('EmpMobileSmsIcon2').css('display','none');
+						        $('EmpMobilePhoneIcon2').css('display','none');
+						    }else{
+						        $('EmpPhone').text = EmpPhone;
+						    }
+						    if(EmpMobilePhone!=""||EmpPhone!=""){             //联系人手机与住宅电话有一个不为空时，显示电话、短信按钮
+						        $('EmpMobilePhoneIcon').css("display","");
+						        $('EmpMobileSmsIcon').css("display","");
+						    }
+						    var EmpBusinessPhone = dataJson.EmpBusinessPhone; //联系人商务电话
+						    if(EmpBusinessPhone!=null&&EmpBusinessPhone!=""){
+						        $('EmpBusinessPhone').text = EmpBusinessPhone;
+						        $('EmpBusinessPhoneIcon').css("display","");
+						    }else{
+						        $('EmpBusinessPhone').text = EmpBusinessPhone;
+						        $('EmpBusinessPhone').css("display","none");
+						        $('EmpBusinessPhoneIcon1').css("display","none");
+						    }
+						    var EmpEmail = dataJson.EmpEmail;   //邮箱1
+						    if(EmpEmail==null||EmpEmail== ''||EmpEmail== 'null'){
+						        EmpEmail = "";
+						        $('EmpEmail').text = EmpEmail;
+						        $('EmpEmail').css('display','none');
+						        $('EmpEmailIcon1').css('display','none');
+						    }else{
+						    	$('EmpEmail').text = EmpEmail;
+						    }
+						    
+						    var EmpEmail2 = dataJson.EmpEmail2;    //邮箱2
+						    if(EmpEmail2==null||EmpEmail2== 'null'||EmpEmail2 == ''){
+						        EmpEmail2 = "";
+						        $('EmpEmail2').text = EmpEmail2;
+						        $('EmpEmail2').css('display','none');
+						        $('EmpEmailIcon2').css('display','none');
+						    }else{
+						        $('EmpEmail2').text = EmpEmail2;
+						    }
+						    
+						    var EmpEmail3 = dataJson.EmpEmail3;    //邮箱3
+						    if(EmpEmail3==null||EmpEmail3== 'null'||EmpEmail3 == ''){
+						        EmpEmail3 = "";
+						        $('EmpEmail3').text = EmpEmail3;
+						        $('EmpEmail3').css('display','none');
+						        $('EmpEmailIcon3').css('display','none');
+						    }else{
+						        $('EmpEmail3').text = EmpEmail3;
+						    }
+						    
+						    
+						    if(EmpEmail!=""||EmpEmail2!=""||EmpEmail3!=""){
+						       $('EmpEmailIcon').css('display','');
+						    }
+                 	 }
+                 }
+            },function(error){
+				 toErro(error);
+			});
+        }
+      
+      function addGroup(){ 
+	   		var groupId = '';
+	   		var groupName = '';
+	   		$page.open('../mylinkman/selectGroup.xml?groupId='+groupId+'&groupName='+groupName, {animation:'right-to-left'});
+	   }
+	   
+	   function comSelect(name,id){
+           if(id==''){
+           		alert("暂无可加入的群组");
+           		return;
+           }
+           $http.progress({src:'loading.gif',text:''}).post(evoUrl+'/ezOffice/linkman/perToGroup.do', 
+				{innerId:linkManId,groupId:id},function(data){
+				var obj = JSON.parse(data);
+				if(obj.logonerror &&obj.logonerror=='1'){
+         		    alert("该账号已在设备"+obj.deviceId+"上登录");
+         		    $page.open('../index.xml',{target:'_self'});
+                    return;
+                }
+				hint(obj.message.description);
+	   		},function(error) {
+				toErro(error);
+			});
+       }
+      
+	   function addLinkman(){
+	        var classId='';
+	        var className='';
+	        $page.open('../mylinkman/selectLinkClass.xml?classId='+classId+'&className='+className, {animation:'right-to-left'});
+	   }
+        
+       function fillInput(name,id){
+           $http.progress({src:'loading.gif',text:''}).post(evoUrl+'/ezOffice/linkman/perToLinkMan.do', 
+				{innerId:linkManId,classId:id},function(data){
+				var obj = JSON.parse(data);
+				if(obj.logonerror &&obj.logonerror=='1'){
+         		    alert("该账号已在设备"+obj.deviceId+"上登录");
+         		    $page.open('../index.xml',{target:'_self'});
+                    return;
+                }
+				hint(obj.message.description);
+	   		},function(error) {
+				toErro(error);
+			});
+       }
+       
+	   function toErro(error){
+			if (error == 'timeout') {
+				hint('连接服务器超时！');
+			} else if (error == '404') {
+				hint('链接超时重新登录！');
+			} else if (error == '500') {
+				hint('内部服务器错误！');
+			} else {
+				hint('访问网络错误！错误代码:' + error);
+			}
+			storage.setItem('isout','1');
+			$page.open('../index.xml',{animation:'down-to-up'});
+		}  
+    ]]>
+    </script> 
+	<page>
+		<title style="background:#3DAFFE;">
+		    <left>
+				<button role="back" />
+			</left>
+            <center>
+                <label id="title_center_label">联系人详情</label>
+            </center>
+            <right>
+                <button style="margin-right:10;" onclick="$('popmenu').open();" icon="inner_more.png"></button>
+            </right>
+	    </title>
+	   <popupmenu id="popmenu" position="topright" style="width:150">
+            <list>
+                <item onclick="addGroup();$('popmenu').close();" style="background:#3daffe,#474747">
+                    <row>
+                        <label style="margin-left:5;font-size:18;color:white;">加入群组</label>
+                    </row>
+                </item>
+                <item onclick="addLinkman();$('popmenu').close();" style="background:#3daffe,#474747">
+                    <row>
+                        <label style="margin-left:5;font-size:18;color:white;">加入我的联系人</label>
+                    </row>
+                </item>
+            </list>
+		</popupmenu> 
+		<content style="background:#f0f0f3;">
+			<list>
+	            <item style="height:150;background:desk_percenter_bg.png;"> 
+	                   <col>
+	                        <row><img src="" effect="round"  style="width:70;height:70;align:center;" id="EmpLivingPhoto" default="login_per.png"/></row>
+	                        <row><label style="align:center;color:#ffffff;font-size:18;" id="departAndName"></label></row>
+	                   </col>
+	            </item>
+	            <item>
+			        <col>
+			            <label style="color:#b8b8b8;font-size:12;">职务</label>
+			            <label id="EmpDuty" style="color:#555555;font-size:16;"></label>
+					</col>
+	            </item>
+			    <item style="col-width:70%,15%,*">
+                    <col>
+                        <row><label style="color:#c1c1c1;">手机</label></row>
+                        <row><label id="EmpMobilePhone"></label></row>
+			            <row><label id="EmpPhone"></label></row>
+                    </col>
+                    <col>
+                        <row><button  style="background:person_sms.png;width:20;height:20;display:hidden;" id="EmpMobileSmsIcon" onclick="sendSms()" /></row>
+                        <row><label id="EmpMobileSmsIcon1"></label></row>
+                        <row ><label id="EmpMobileSmsIcon2"></label></row>
+                    </col>
+                    <col>
+                        <row><button  style="background:person_phone.png;width:20;height:20;display:hidden;" id="EmpMobilePhoneIcon" onclick="callPhone()"/></row>
+                        <row><label id="EmpMobilePhoneIcon1"></label></row>
+                        <row><label id="EmpMobilePhoneIcon2"></label></row>
+                    </col>
+                </item>
+                <item style="col-width:85%,*">
+                    <col>
+                        <row><label style="color:#c1c1c1;">商务电话</label></row>
+                        <row><label id="EmpBusinessPhone"></label></row>
+                    </col>
+                    <col>
+                        <row><button  style="background:person_phone.png;width:20;height:20;display:hidden;" id="EmpBusinessPhoneIcon" onclick="callBusinessPhone()"/></row>
+                        <row><label id="EmpBusinessPhoneIcon1"></label></row>
+                    </col>
+                </item>
+                <item style="col-width:85%,*">
+                    <col>
+                        <row><label style="color:#c1c1c1;">邮箱地址</label></row>
+                        <row><label id="EmpEmail"></label></row>
+                        <row><label id="EmpEmail2"></label></row>
+                        <row><label id="EmpEmail3"></label></row>
+                    </col>
+                    <col>
+                        <row><button  style="background:person_email.png;width:20;height:20;display:hidden;" id="EmpEmailIcon" onclick="sendEmail()"/></row>
+                        <row><label id="EmpEmailIcon1"></label></row>
+                        <row><label id="EmpEmailIcon2"></label></row>
+                        <row><label id="EmpEmailIcon3"></label></row>
+                    </col>
+                </item>
+			</list>
+		</content>
+	</page>
+	 <script>
+    <![CDATA[
+        function callPhone(){    //移动电话与家庭电话，打电话
+		    var EmpMobilePhone = $('EmpMobilePhone').text;   //移动电话 
+		    var EmpPhone = $('EmpPhone').text;         //家庭电话
+		    /*
+		    *当住宅电话与移动电话都存在时，弹出框，并进行选择。
+		    */
+		    if(EmpPhone!=null&&EmpPhone.length>0&&EmpMobilePhone!=null&&EmpMobilePhone.length>0){
+		       var menu = $C('<actionmenu cancelTitle="Cancel">' +
+								 '<item style="text-decoration:underline;color:blue" label="'+'使用：'+EmpMobilePhone+'" onclick="$phone.call(\''+EmpMobilePhone+'\')"/>' +
+								 '<item style="text-decoration:underline;color:blue" label="'+'使用：'+EmpPhone+'" onclick="$phone.call(\''+EmpPhone+'\')"/>' +
+							'</actionmenu>');
+               menu.show();
+		    }else if(EmpMobilePhone!=null&&EmpMobilePhone.length>0){
+		       if(confirm('确认拨打此电话？')){
+		           $phone.call(EmpMobilePhone);
+			   }
+		    }else if(EmpPhone!=null&&EmpPhone.length>0){
+		       if(confirm('确认拨打此电话？')){
+		            $phone.call(EmpPhone);
+			   }
+		    }
+		}
+		 
+		function sendSms(){    //移动电话与家庭电话，发短信
+		    var EmpMobilePhone = $('EmpMobilePhone').text;   //移动电话 
+		    var EmpPhone = $('EmpPhone').text;         //家庭电话
+		    /*
+		    *当住宅电话与移动电话都存在时，弹出框，并进行选择。
+		    */
+		    if(EmpPhone!=null&&EmpPhone.length>0&&EmpMobilePhone!=null&&EmpMobilePhone.length>0){
+		       var menu = $C('<actionmenu cancelTitle="Cancel">' +
+								 '<item style="text-decoration:underline;color:blue" label="'+'使用：'+EmpMobilePhone+'" onclick="$phone.sms(\''+EmpMobilePhone+'\')"/>' +
+								 '<item style="text-decoration:underline;color:blue" label="'+'使用：'+EmpPhone+'" onclick="$phone.sms(\''+EmpPhone+'\')"/>' +
+							'</actionmenu>');
+               menu.show();
+		    }else if(EmpMobilePhone!=null&&EmpMobilePhone.length>0){
+		       if(confirm('确认给此号码发短信吗？')){
+		           $phone.sms(EmpMobilePhone);
+			   }
+		    }else if(EmpPhone!=null&&EmpPhone.length>0){
+		       if(confirm('确认给此号码发短信吗？')){
+		            $phone.sms(EmpPhone);
+			   }
+		    }
+		}
+		
+		function callBusinessPhone(){   //拨打商务电话
+		    var  EmpBusinessPhone = $('EmpBusinessPhone').text;   //商务电话 
+		    if(EmpBusinessPhone!=null&&EmpBusinessPhone.length>0){
+			     if(confirm('确认拨打此电话？')){
+		             $phone.call(EmpBusinessPhone);
+			     }
+		    }
+	        
+		}
+		
+		function sendEmail(){    //发送外部邮件
+		   var EmpEmail = $('EmpEmail').text;     //邮箱1
+		   var EmpEmail2 = $('EmpEmail2').text;   //邮箱2
+		   var EmpEmail3 = $('EmpEmail3').text;   //邮箱3
+		   
+		   if(EmpEmail!=null&&EmpEmail.length>0&&EmpEmail2!=null&&EmpEmail2.length>0&&EmpEmail3!=null&&EmpEmail3.length>0){  //有三个邮箱都
+		   	   var menu = $C('<actionmenu cancelTitle="Cancel">' +
+								 '<item style="text-decoration:underline;color:blue" label="'+'使用：'+EmpEmail+'" onclick="$phone.email(\''+EmpEmail+'\',{subject:\'\',text:\'\'})"/>' +
+								 '<item style="text-decoration:underline;color:blue" label="'+'使用：'+EmpEmail2+'" onclick="$phone.email(\''+EmpEmail2+'\',{subject:\'\',text:\'\'})"/>' +
+								 '<item style="text-decoration:underline;color:blue" label="'+'使用：'+EmpEmail3+'" onclick="$phone.email(\''+EmpEmail3+'\',{subject:\'\',text:\'\'})"/>' +
+							'</actionmenu>');
+               menu.show();
+		   }else if(EmpEmail!=null&&EmpEmail.length>0&&EmpEmail2!=null&&EmpEmail2.length>0){  //有邮箱1、邮箱2二个邮箱
+		       var menu = $C('<actionmenu cancelTitle="Cancel">' +
+								 '<item style="text-decoration:underline;color:blue" label="'+'使用：'+EmpEmail+'" onclick="$phone.email(\''+EmpEmail+'\',  {subject:\'\',text:\'\'})"/>' +
+								 '<item style="text-decoration:underline;color:blue" label="'+'使用：'+EmpEmail2+'" onclick="$phone.email(\''+EmpEmail2+'\',  {subject:\'\',text:\'\'})"/>' +
+							 '</actionmenu>');
+               menu.show();
+		   }else if(EmpEmail!=null&&EmpEmail.length>0&&EmpEmail3!=null&&EmpEmail3.length>0){  //有邮箱1、邮箱3二个邮箱
+		       var menu = $C('<actionmenu cancelTitle="Cancel">' +
+								 '<item style="text-decoration:underline;color:blue" label="'+'使用：'+EmpEmail+'" onclick="$phone.email(\''+EmpEmail+'\',  {subject:\'\',text:\'\'})"/>' +
+								 '<item style="text-decoration:underline;color:blue" label="'+'使用：'+EmpEmail3+'" onclick="$phone.email(\''+EmpEmail3+'\',  {subject:\'\',text:\'\'})"/>' +
+							 '</actionmenu>');
+               menu.show();
+		   }else if(EmpEmail2!=null&&EmpEmail2.length>0&&EmpEmail3!=null&&EmpEmail3.length>0){  //有邮箱2、邮箱3二个邮箱
+		       var menu = $C('<actionmenu cancelTitle="Cancel">' +
+								 '<item style="text-decoration:underline;color:blue" label="'+'使用：'+EmpEmail2+'" onclick="$phone.email(\''+EmpEmail2+'\',  {subject:\'\',text:\'\'})"/>' +
+								 '<item style="text-decoration:underline;color:blue" label="'+'使用：'+EmpEmail3+'" onclick="$phone.email(\''+EmpEmail3+'\',  {subject:\'\',text:\'\'})"/>' +
+							 '</actionmenu>');
+               menu.show();
+		   }else if(EmpEmail!=null&&EmpEmail.length>0){
+		       if(confirm('确认用此邮箱发邮件？')){
+		             $phone.email(EmpEmail,  {subject:'',text:''}); 
+			     } 
+		   }else if(EmpEmail2!=null&&EmpEmail2.length>0){
+		       if(confirm('确认用此邮箱发邮件？')){
+		             $phone.email(EmpEmail2,  {subject:'',text:''}); 
+			     } 
+		   }else if(EmpEmail3!=null&&EmpEmail3.length>0){
+		       if(confirm('确认用此邮箱发邮件？')){
+		             $phone.email(EmpEmail3,  {subject:'',text:''}); 
+			     } 
+		   }
+		}
+    ]]>
+    </script>
+</imag>

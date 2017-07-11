@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="utf-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>应用管理-上传应用</title>
+    <link rel="shortcut icon" href="favicon.ico"/>
+    <link th:href="@{/static/css/bootstrap.min.css}" rel="stylesheet"/>
+    <link th:href="@{/static/css/font-awesome.min.css}" rel="stylesheet"/>
+    <link th:href="@{/static/css/plugins/iCheck/custom.css}" rel="stylesheet"/>
+    <link th:href="@{/static/css/animate.min.css}" rel="stylesheet"/>
+    <link th:href="@{/static/css/style.min.css}" rel="stylesheet"/>
+    <link th:href="@{/static/css/liveValidation.css}" rel="stylesheet"/>
+    <script th:src="@{/static/js/jquery.min.js}"></script>
+    <script th:src="@{/static/js/bootstrap.min.js}"></script>
+    <script th:src="@{/static/js/plugins/iCheck/icheck.min.js}"></script>
+    <script th:src="@{/static/js/content.min.js}"></script>
+    <script th:src="@{/static/js/plugins/messager/jquery.messager.min.js}"></script>
+    <script th:src="@{/static/js/plugins/layers/layer.js}"></script>
+    <script th:src="@{/static/js/plugins/ajaxfileupload/ajaxfileupload.js}"></script>
+    <script th:src="@{/static/js/livevalidation.js}"></script>
+    <script>
+        $(function () {
+            $("#myModal5").modal("show");
+
+            $("#fileInput").change(function () {
+                $("#fileText").val($("#fileInput").val());
+            })
+            var fileTextValidation = new LiveValidation("fileText", {
+                onlyOnBlur: true,
+                validMessage: ' ',
+                onsubmit: true
+            });
+            fileTextValidation.add(Validate.Presence, {failureMessage: "zip文件不能为空"});
+            fileTextValidation.add(Validate.Inclusion, {
+                within: ['\.zip'],
+                partialMatch: true,
+                failureMessage: "必需添加 .zip 文件"
+            });
+        })
+
+    </script>
+</head>
+
+<body class="gray-bg">
+<div class="wrapper wrapper-content animated fadeInRight">
+    <!-- 上传应用 -->
+    <div class="modal inmodal fade" id="myModal5" tabindex="-1"
+         role="dialog" aria-hidden="true" data-backdrop="true">
+        <div class="modal-dialog">
+            <form th:action="@{/manager/app/create}" role="form" enctype="multipart/form-data"
+                  method="post">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <button type="button" class="close" data-dismiss="modal">
+                            <span aria-hidden="true">&times;</span><span class="sr-only">Close</span>
+                        </button>
+                        <h4 class="modal-title">上传应用</h4>
+                        <small class="font-bold">这里可以上传你的IMAG应用，系统会自动解析应用信息，并添加到版本信息中。</small>
+                    </div>
+                    <div class="modal-body" style="text-align: center;">
+                        <div class="input-group" id="appform">
+                            <input type="file" style="display: none;" id="fileInput" name="file"/>
+                            <input type="text" class="form-control" readonly="readonly" id="fileText"/>
+                            <label for="fileInput" class="btn btn-success input-group-addon">
+                                <span>
+							        <i class="fa fa-folder-open"></i>选择文件...
+							    </span>
+                            </label>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <div class="sk-spinner sk-spinner-wave" id="loading" style="display: none;">
+                            <div class="sk-rect1"></div>
+                            <div class="sk-rect2"></div>
+                            <div class="sk-rect3"></div>
+                            <div class="sk-rect4"></div>
+                            <div class="sk-rect5"></div>
+                            <p>上传中...</p>
+                        </div>
+                        <div id="btns">
+                            <button type="button" class="btn btn-white" data-dismiss="modal"
+                                    id="colsemodal">关闭
+                            </button>
+                            <button type="submit" class="btn btn-primary" id="uploadzip">开始上传</button>
+                        </div>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+</body>
+</html>

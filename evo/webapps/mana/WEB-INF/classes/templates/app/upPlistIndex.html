@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="utf-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>版本管理-设置plist</title>
+    <link rel="shortcut icon" href="favicon.ico"/>
+    <link th:href="@{/static/css/bootstrap.min.css}" rel="stylesheet"/>
+    <link th:href="@{/static/css/font-awesome.min.css}" rel="stylesheet"/>
+    <link th:href="@{/static/css/plugins/iCheck/custom.css}" rel="stylesheet"/>
+    <link th:href="@{/static/css/animate.min.css}" rel="stylesheet"/>
+    <link th:href="@{/static/css/style.min.css}" rel="stylesheet"/>
+    <link th:href="@{/static/css/liveValidation.css}" rel="stylesheet"/>
+    <script th:src="@{/static/js/jquery.min.js}"></script>
+    <script th:src="@{/static/js/bootstrap.min.js}"></script>
+    <script th:src="@{/static/js/plugins/iCheck/icheck.min.js}"></script>
+    <script th:src="@{/static/js/content.min.js}"></script>
+    <script th:src="@{/static/js/plugins/messager/jquery.messager.min.js}"></script>
+    <script th:src="@{/static/js/plugins/layers/layer.js}"></script>
+    <script th:src="@{/static/js/plugins/ajaxfileupload/ajaxfileupload.js}"></script>
+    <script th:src="@{/static/js/livevalidation.js}"></script>
+    <style>
+        .form-foot-appSet-modal {
+            padding: 15px;
+            text-align: right;
+            border-top: 1px solid #e5e5e5;
+        }
+    </style>
+    <script th:inline="javascript">
+        $(function () {
+            var typeCheckIos = $("#typeCheck").val();
+            $("#myModal6").modal("show");
+        })
+
+        $(function () {
+            $("#setAppSubUrl").click(function () {
+                $('#versionPlistUrlForm').submit();
+            });
+        })
+
+    </script>
+</head>
+
+<body class="gray-bg">
+<div class="wrapper wrapper-content animated fadeInRight">
+    <!-- 上传版本信息 -->
+    <div class="modal inmodal fade" id="myModal6" tabindex="-1"
+         role="dialog" aria-hidden="true" data-backdrop="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal">
+                        <span aria-hidden="true">&times;</span><span class="sr-only">Close</span>
+                    </button>
+                    <h3 class="modal-title">Plist设置</h3>
+                    <!--<small class="font-bold">设置该应用的相关信息</small>-->
+                </div>
+                <div class="modal-body" style="text-align: center;">
+                    <div class="container-fluid">
+                        <div class="row-fluid">
+                            <div class="span12">
+                                <div class="tabbable">
+                                    <div class="tab-content container">
+                                        <form id="versionPlistUrlForm" th:action="@{/manager/version/upPlist}"
+                                              class="form-horizontal" role="form"
+                                              method="post">
+                                            <input type="hidden" name="versionId" th:value="${version.id}">
+                                            <div class="form-group" style="margin-top: 15px">
+                                                <label class="col-sm-2 control-label">PListUrl设置:</label>
+                                                <div class="col-sm-4">
+                                                    <input th:value="${version.plistUrl}" type="text"
+                                                           id="versionPlistUrl" name="versionPlistUrl"
+                                                           class="form-control"/>
+                                                </div>
+                                            </div>
+                                        </form>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <div class="sk-spinner sk-spinner-wave" id="loading" style="display: none;">
+                        <div class="sk-rect1"></div>
+                        <div class="sk-rect2"></div>
+                        <div class="sk-rect3"></div>
+                        <div class="sk-rect4"></div>
+                        <div class="sk-rect5"></div>
+                        <p>上传中...</p>
+                    </div>
+                    <div id="btns">
+                        <button type="button" class="btn btn-white" data-dismiss="modal"
+                                id="colsemodal">关闭
+                        </button>
+                        <button type="submit" id="setAppSubUrl" class="btn btn-primary">保存</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+</body>
+</html>

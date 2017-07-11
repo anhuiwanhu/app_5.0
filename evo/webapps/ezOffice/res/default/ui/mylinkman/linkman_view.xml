@@ -1,0 +1,269 @@
+<?xml version="1.0" encoding="utf-8"?>
+<imag>
+	<script>
+   <![CDATA[
+        var storage = $phone.localStorage();
+		var evoUrl = storage.getItem('evoUrl');
+		var linkManId = storage.getItem('linkman_manId');
+		var manName = storage.getItem('linkman_manName');
+		var picPath = storage.getItem('picPath');
+		$page.onload = function() {
+	         viewLinkman();
+		}
+		function viewLinkman(){
+			$("manName").text = manName;
+			$("linkmanId").value=linkManId;
+			$http.progress({src:'loading.gif',text:''}).post(evoUrl+'/ezOffice/linkman/viewLink.do', 
+				{linkManId:linkManId}, function(data){
+				    var obj = JSON.parse(data);
+				    if(obj.logonerror &&obj.logonerror=='1'){
+	         		    alert("该账号已在设备"+obj.deviceId+"上登录");
+	         		    $page.open('../index.xml',{target:'_self'});
+	                    return;
+	                }
+					var result = obj.message.result;
+					if(result =="1"){
+						var linkman = obj.data;
+						$("classId").value=linkman.classId;
+						$("className").value=linkman.className;
+						$("LinkManName").value=linkman.LinkManName;
+						if(linkman.LinkManSex=='0'){
+							$("manSex").checked="true";
+						}else{
+							$("wonSex").checked="true";
+						}
+						$("LinkManUnit").value=linkman.LinkManUnit;
+						$("MobilePhone").value=linkman.MobilePhone;
+						$("BussinessPhone").value=linkman.BussinessPhone;
+						$("LinkManAddress").value=linkman.LinkManAddress;
+						var email='';
+						if(linkman.LinkManEmail!=''){
+						    email=email + linkman.LinkManEmail+";";
+						}
+						if(linkman.LinkManEmail2!=''){
+							email=email + linkman.LinkManEmail2+";";
+						}
+						if(linkman.LinkManEmail3!=''){
+							email=email + linkman.LinkManEmail3;
+						}
+						$("LinkManEmail").value=email;
+						var linkManLivingPhoto = linkman.linkManLivingPhoto;
+						if(linkManLivingPhoto !=''){
+							$("empLivingPhoto").src=picPath+linkManLivingPhoto;
+						}
+					}
+				},function(error) {
+					toErro(error);
+				});
+		}
+		
+		function saveLinkman(){
+			$('linkmanFrom').action=evoUrl+"/ezOffice/linkman/saveLink.do";
+			var className = $('className').value.trim();
+   			if(className.length == 0){
+       			hint('分类不能为空！');
+       			return;
+   			}
+			var LinkManName = $('LinkManName').value.trim();
+   			if(LinkManName.length == 0){
+       			hint('中文名不能为空！');
+       			return;
+   			}
+   			var MobilePhone = $('MobilePhone').value.trim();
+   			if(MobilePhone !=''){
+   				if(MobilePhone.length!=11){
+	   				hint('手机号格式不对！');
+	   				return;
+	   			}
+   			}
+   			var mail = $('LinkManEmail').value;
+   			if(containSpecial(mail)){
+				$('LinkManEmail').value='';
+				return;
+			}
+			if(mail.indexOf(';')>-1){
+				var arr  = mail.match(/;/g);
+				if(arr.length > 2){
+					hint("电子邮件最多支持三个邮箱！");
+					return;
+				}
+			}
+			$('linkmanFrom').submit(function(data) {
+				var obj = JSON.parse(data);
+				var result = obj.message.result
+				hint(obj.message.description);
+                //$page.close();
+				$page.close(0, 'reClass()');
+            }, function(error) {
+                hint('添加失败！');
+            });
+		}
+		
+		function containSpecial(s){
+			if(s!=''){
+				if(/[`~!#\$%\^\&\*\(\)_\+<>《》？，。；、‘ “【】{}|（）=\?:"\{\},\-\\\/\\\/'\[\]]/im.test(s)){
+					alert("邮箱不能包含特殊字符，请重新输入！");
+					return true;
+				}
+			}
+			return false;
+		}
+		
+		function selectColumn(){
+		  var classId = $('classId').value;
+          var className = $('className').value;
+          if(classId==null||classId==''){
+          		classId = '';
+          		className = '';
+          }
+          $page.open('selectLinkClass.xml?classId='+classId+'&className='+className, {animation:'right-to-left'});
+        }
+        
+        function fillInput(chaName,chaId){
+           if(chaId=="" || chaId=="null" || chaId==null || chaId==''){
+           		$('className').value='';
+           		$('classId').value='';
+           }else{
+           		$('className').value=chaName;
+           		$('classId').value=chaId;
+           }
+        }
+        
+        function doFilePhotoAlbum(file){    //上传文件选择相册
+			$page.browseImage({
+				complete: function(path) {
+				   $("picRow").remove($('empLivingPhoto'));
+				   var iconRow = $C('<icon src="'+path+'" effect="round" style="height:35;width:35;" id="emplivingphoto"/>');
+		           $("picRow").add(iconRow);
+				   $('photo').value = path;
+		        },
+		        error: function() {
+		            hint('上传图片失败！');
+		        }
+			  });
+		}
+		
+		function toErro(error){
+			if (error == 'timeout') {
+				hint('连接服务器超时！');
+			} else if (error == '404') {
+				hint('链接超时重新登录！');
+			} else if (error == '500') {
+				hint('内部服务器错误！');
+			} else {
+				hint('访问网络错误！错误代码:' + error);
+			}
+			storage.setItem('isout','1');
+			$page.open('../index.xml',{animation:'right-to-left'});
+		}
+    ]]>
+    </script> 
+
+    <page>
+        <title style="background:#3daffe;tint-color:white">
+            <left>
+                 <button role="back"></button>
+            </left>
+            <center>
+                <label id="manName"></label>
+            </center>
+            <right>
+                <button onclick="saveLinkman();" style="font-size:18;color:#FFFFFF;">保存</button>
+            </right>
+        </title>
+        <content>
+            <form id="linkmanFrom" action="" progress="提交表单|正在提交表单，请稍后..." multipart="true">
+                <list>
+                    <item  accessory="indicator" style="col-width:120,120,*" onclick="doFilePhotoAlbum(this)">
+	                   <col>
+	                   		<input type="hidden" id="cmd" name="cmd" value="updatePerson"/>
+	                   		<label style="font-size:16;color:#555555;">头像：</label>
+	                   </col>
+	                   <col>
+	                        <row id="picRow"><img src="" style="height:35;width:35;" effect="round" id="empLivingPhoto" default="login_per.png"/></row>
+	                   </col>
+	                   <col>
+	                        <row><label style="align:right;font-size:12;color:#555555;">修改头像 </label><input type="file" style="display:none;" id="photo" name="photo"/></row>
+	                   </col>
+		            </item>
+                    <item accessory="indicator" style="col-width:120,*;padding:0;margin:0;" onclick="selectColumn();">
+                        <col style="padding:10;margin:10;">
+                           <row>
+	                           <label style="font-size:16;color:red;">*</label>
+	                           <label style="font-size:16;color:#555555;">分类：</label>
+                           </row>
+                        </col>
+                        <col>
+                           <input type="hidden" id="linkmanId" name="linkmanId"/>
+                           <input type="hidden" id="classId" name="classId"/>
+                           <input type="text" id="className" readonly="true" placeholder="请选择" style="border:0 white;color:#555555;font-size:16" onclick="selectColumn();"/>
+                        </col>
+                    </item>
+                    <item style="col-width:120,*;padding:0;margin:0;">
+                        <col style="padding:10;margin:10;">
+                            <row>
+                                <label style="font-size:16;color:red;">*</label>
+                                <label style="font-size:16;color:#555555;">中文名：</label>
+                            </row>
+                        </col>
+                        <col>
+                            <input type="text" id="LinkManName" name="LinkManName" placeholder="请填写" style="border:0 white;font-size:16;color:#555555"/>
+                        </col>
+                    </item>
+                    <item style="col-width:120,*;padding:0;margin:0;">
+                        <col style="padding:10;margin:10;">
+                            <label style="font-size:16;color:#555555;">性别：</label>
+                        </col>
+                        <col>
+                            <row>
+                              <radio name="LinkManSex" id="manSex" value="0" checked="true" style="font-size:16;color:#555555;">男</radio>
+                              <radio name="LinkManSex" id="wonSex" value="1" style="font-size:16;color:#555555;">女</radio>
+                            </row>
+                        </col>
+                    </item>
+                    <item style="col-width:120,*;padding:0;margin:0;">
+                        <col style="padding:10;margin:10;">
+                            <label style="font-size:16;color:#555555;">单位：</label>
+                        </col>
+                        <col>
+                            <input type="text" id="LinkManUnit" name="LinkManUnit" placeholder="请填写" style="border:0 white;font-size:16;color:#555555"/>
+                        </col>
+                    </item>
+                    <item style="col-width:120,*;padding:0;margin:0;">
+                        <col style="padding:10;margin:10;">
+                            <label style="font-size:16;color:#555555;">手机：</label>
+                        </col>
+                        <col>
+                            <input type="number" id="MobilePhone" name="MobilePhone" maxlength="11" placeholder="请填写" style="border:0 white;font-size:16;color:#555555"/>
+                        </col>
+                    </item>
+                    <item style="col-width:120,*;padding:0;margin:0;">
+                        <col style="padding:10;margin:10;">
+                            <label style="font-size:16;color:#555555;">商务电话：</label>
+                        </col>
+                        <col>
+                            <input type="number" id="BussinessPhone" name="BussinessPhone" placeholder="请填写" style="border:0 white;font-size:16;color:#555555"/>
+                        </col>
+                    </item>
+                    <item style="col-width:120,*;padding:0;margin:0;">
+                        <col style="padding:10;margin:10;">
+                            <label style="font-size:16;color:#555555;">电子邮件：</label>
+                        </col>
+                        <col>
+                            <input type="text" id="LinkManEmail" name="LinkManEmail" placeholder="请填写" style="border:0 white;font-size:16;color:#555555"/>
+                        </col>
+                    </item>
+                    <item style="col-width:120,*;padding:0;margin:0;">
+                        <col style="padding:10;margin:10;">
+                            <label style="font-size:16;color:#555555;">现住地址：</label>
+                        </col>
+                        <col>
+                            <input type="text" id="LinkManAddress" name="LinkManAddress" placeholder="请填写" style="border:0 white;font-size:16;color:#555555"/>
+                        </col>
+                    </item>
+                </list>
+             </form>
+        </content>
+    </page>
+</imag>
+

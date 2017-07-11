@@ -1,0 +1,73 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html  xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=4.0, user-scalable=no">
+    <title>客户端下载</title>
+    <link type="text/css" rel="stylesheet" th:href="@{/static/css/pro.css}" />
+</head>
+<script type="text/javascript" th:src="@{/static/js/jquery.min.js}"></script>
+<script type="text/javascript">
+    $(function(){
+        var sw = $(window).width();
+        var sh = $(window).height();
+        $('body').append("<div id='subBg' style='position:fixed; left:0; top:0; background:rgba(0,0,0,0.8);z-index:9999; cursor:default;width:100%;height:100%;display:none;'><p style='text-align:center; color:#fff;font-size:16px;font-family:microsoft yahei; display:block;line-height:2em;padding-top:70px;'>非常抱歉，微信不允许直接下载，请点击“...”并选择在浏览器中打开</p></div>");
+        $('#subBg').width(sw);
+        $('#subBg').height(sh);
+
+        $('.active').mousedown(function(){
+            $(this).css('background','#f5f5f5');
+        })
+        $('.active').mouseup(function(){
+            $(this).css('background','');
+        })
+        var isOpenTip = is_weixin();
+        if(isOpenTip){
+            $('#subBg').show();
+            $('#subBg').click(function(){
+                $(this).hide();
+            });
+            $(".container").css("display","none");
+        }else{
+            $(".container").css("display","block");
+        }
+
+    })
+
+    //判断是否微信
+    function is_weixin(){
+        var ua = navigator.userAgent.toLowerCase();
+        if(ua.match(/MicroMessenger/i)=="micromessenger") {
+            return true;
+        } else {
+            return false;
+        }
+    }
+</script>
+<!-- <body>
+	<header>
+		<div class="title">万户网络IOS</div>
+		<div class="back">
+			<a href="javascript:void(window.history.back())"><img src="/mana/images/download/CZicon_ht.png" /></a>
+		</div>
+	</header>
+	<div id="content" class="container">
+	   <div class="appInfo">
+				<div class="appIcon"></div>
+				<div class="appIntroduce">
+					<p>ios</p>
+					<div><p></p><p></p><p></p><p></p><p></p></div>
+					<div><span>为您提供方便的移动办公</span></div>
+				</div>
+				<div class="downIcon"><a href="/mana/a/I425/00000158/version_down"><img src="/mana/images/download/sj_xzan01.png" /></a></div>
+			</div>
+	   </div>
+</body>   -->
+<body class="ios">
+<div class="ios-img"><img th:src="@{/static/img/bg3.png}"></div>
+<div id="content" class="container">
+    <div class="foot" th:if="${type} == 'ios'"><a th:href="'itms-services://?action=download-manifest&url='+${plistVersionUrl}" style="font-size:2rem;width:40%;padding-bottom:1rem;">立即安装</a></div>
+    <div class="foot" th:if="${type} != 'ios'"><a th:href="@{/service/d/v3/download(platformType = ${type})}" style="font-size:2rem;width:40%;padding-bottom:1rem;">立即安装</a></div>
+</div>
+</body>
+</html>
