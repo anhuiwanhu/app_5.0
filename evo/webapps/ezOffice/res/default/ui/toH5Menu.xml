@@ -1,0 +1,360 @@
+<?xml version="1.0" encoding="utf-8"?>
+<imag>
+    <script>
+    <![CDATA[
+        var toNewMenu = '';
+        var storage = $phone.localStorage();
+		var evoUrl = storage.getItem('evoUrl');
+		var evoword = storage.getItem('sys_evoword');
+	    var oaPDF = storage.getItem('sys_oaPdf');
+        function setJSValue(value) {
+            $('titlecenter').text=value;
+        }
+        var webUrl = '';
+        var pushType = '';
+        $page.onload = function() {
+            $('test_web').onloadfinish = function() {
+        		$('test_web').exec('$imag.exec("setJSValue(\'" + document.title + "\')");');
+        		 if($('test_web').canGoBack){
+                    $('buttonback').css('display','show');
+                    $('buttonclose').css('margin-left','10');
+                 }else{
+                    $('buttonback').css('display','none');
+                    $('buttonclose').css('margin-left','-2');
+                 }
+        	}
+		    var h5ip = "";
+		    var code = "";
+		    webUrl = storage.getItem('desktop_toUrl');
+		    toNewMenu = $param['desktop_toNewMenu'];
+		    pushType = $param['pushType'];  //推送传递过来的页面
+		    $http.post(evoUrl+'/ezOffice/linkwebapp/getcode.do','', function(data) {
+            	 var obj = JSON.parse(data);
+                 if(obj.logonerror &&obj.logonerror=='1'){
+         		    alert("该账号已在设备"+obj.deviceId+"上登录");
+         		    $page.open('index.xml',{animation:'right-to-left'});
+         		    return;
+                 }
+                 if(obj.result && obj.result=='1'){
+		          	h5ip = obj.h5Url;
+		          	code = obj.code;
+		         }else{
+		            alert("获取code失败!");
+		            return;
+		            $page.open('index.xml',{animation:'right-to-left'});
+		         }
+		         code = code+"&evoword="+evoword+"&oaPDF="+oaPDF;//批注、编辑正文文件参数
+		         if(pushType!=null && pushType!=''){
+		         	toPushPage(h5ip,code,pushType);
+		         }else if(toNewMenu=='sysMenu'){
+		         	$('test_web').src = h5ip+webUrl+'?code='+code;
+		         }else if(toNewMenu=='userMenu'){
+		         	$('test_web').src = webUrl;
+		         }else if(toNewMenu=='custMenu'){
+		           var custMenu_menuId = storage.getItem('custMenu_menuId');
+		           var custMenu_menuName = storage.getItem('custMenu_menuName');
+		           $('test_web').src = h5ip+webUrl+'?menuId='+custMenu_menuId+"&menuName="+encodeURIComponent(custMenu_menuName)+'&code='+code+'&fromPage=evo';
+		         }else if(toNewMenu=='infoChan'){
+		         	var chanId =  storage.getItem('desktop_channelId');
+		         	var chanName =  storage.getItem('desktop_channelName');
+		         	$('test_web').src = h5ip+'/information/channelList.controller?channelId='+chanId+"&channelName="+encodeURIComponent(chanName)+'&code='+code;
+		         }else if(toNewMenu=='write_innermail'){
+		         	$('test_web').src = h5ip+'/mail/new.controller?openType=write&openFlag=yes&code='+code+'&fromPage=evo';
+		         }else if(toNewMenu=='write_information'){
+		         	$('test_web').src = h5ip+'/information/create.controller?code='+code+'&fromPage=evo';
+		         }else if(toNewMenu=='write_workflow'){
+		         	$('test_web').src = h5ip+'/dealfile/list.controller?code='+code+'&fromPage=evo';    //evoAdd表示进入新建流程页面
+		         }else if(toNewMenu=='write_calendar'){
+		         
+		         }else if(toNewMenu=='write_report'){
+		         	$('test_web').src = h5ip+'/report/newReport.controller?cmdFlag=week&code='+code+'&fromPage=evo';
+		         }else if(toNewMenu=='write_worklog'){
+		         	$('test_web').src = h5ip+'/worklog/writeLog.controller?logType=0&loadFlag=1&code='+code+'&fromPage=evo';
+		         }else if(toNewMenu=='push_detail'){
+		         	topushdetail(h5ip,code);
+		         }else if(toNewMenu == null||toNewMenu==''){
+		            todetail(h5ip,code);   //详情
+		         }
+			},function(error) {
+			    if (error == 'timeout') {
+			        hint('连接服务器超时！');
+			    } else if (error == '404') {
+			        hint('链接超时重新登录！');
+			    } else if (error == '500') {
+			        hint('内部服务器错误！');
+			    } else {
+			        hint('访问网络错误！错误代码:' + error);
+			    }
+			    $page.open('index.xml',{animation:'right-to-left'});
+		    });
+         
+		}
+		
+		//推送页面
+		function toPushPage(h5ip,code,type){
+			if(type == 'mail'){
+				$('test_web').src = h5ip+"/mail/mailBox.controller"+'?code='+code;
+			}else if(type == 'defile'){
+				$('test_web').src = h5ip+"/dealfile/list.controller"+'?code='+code;
+			}else if(type == 'doc'){
+				$('test_web').src = h5ip+"/doc/getAllReceiveFile.controller"+'?code='+code;
+			}else if(type == 'information'){
+				$('test_web').src = h5ip+"/information/index.controller"+'?code='+code;
+			}else if(type == 'meeting'){
+				$('test_web').src = h5ip+"/meeting/meetingNoticeList.controller"+'?code='+code;
+			}else if(type == 'newKq'){
+				$('test_web').src = h5ip+"/attendance/loadWxLocation.controller"+'?code='+code;
+			}else if(type == 'workReport'){
+				$('test_web').src = h5ip+"/report/index.controller"+'?code='+code;
+			}else if(type == 'newMeeting'){
+				$('test_web').src = h5ip+"/newmeeting/meetingNoticeList.controller"+'?code='+code;
+			}
+		}
+		
+		function topushdetail(h5ip,code){
+			var paramstring	= $param['paramstring'];
+			$('test_web').src = h5ip+paramstring+'?code='+code;
+		}
+		
+		function todetail(h5ip,code){
+			//我的常用应用，跳转到详情 
+	         var module_detail_name	= $param['module_detail_name'];
+	         if('govApp'==module_detail_name){  //公文
+	              var writeOrg = $param['writeOrg'];
+	              var createdTime = decodeURIComponent($param['createdTime']);
+	              var title = $param['title'];
+	              var accessoryName = $param['accessoryName'];
+	              var accessorySaveName = $param['accessorySaveName'];
+	              if(accessoryName==null||accessoryName=='null'){
+	              	   accessoryName = '';
+	              	   accessorySaveName ='';
+	              }
+	              var goldGridId = $param['goldGridId'];
+	              var wordType = $param['wordType'];
+	              var id = $param['id'];
+	              
+	             // alert(h5ip+'/doc/openReceiveDetail.controller?writeOrg='+writeOrg+'&createdTime='+$param['createdTime']+'&title='+title+'&accessoryName='+accessoryName+'&accessorySaveName='+accessorySaveName+'&goldGridId='+goldGridId+'&wordType='+wordType+'&id='+id+'&code='+code);
+	              $('test_web').src = h5ip+'/doc/openReceiveDetail.controller?writeOrg='+writeOrg+'&createdTime='+$param['createdTime']+'&title='+title+'&accessoryName='+accessoryName+'&accessorySaveName='+accessorySaveName+'&goldGridId='+goldGridId+'&wordType='+wordType+'&id='+id+'&code='+code;
+	         }else if('mailApp'==module_detail_name){   //邮件
+	         	  var mailid = $param['mailid'];
+	         	  var mailuserid = $param['mailuserid'];
+	              $('test_web').src = h5ip+'/mail/receiveMailDetail.controller?mailid='+mailid+'&mailuserid='+mailuserid+'&detailType=receive&accessorySize=0&openFlag=yes'+'&code='+code+'&fromPage=evo';
+	         }else if('infoApp'==module_detail_name){  //信息
+	         	  var infoId = $param['infoId'];
+	         	  var informationType = $param['informationType'];
+	         	  var channelId = $param['channelId'];
+	              $('test_web').src = h5ip+'/information/infoDetail.controller?infoId='+infoId+'&informationType='+informationType+'&channelId='+channelId+'&informationCommonNum=0'+'&code='+code+'&fromPage=evo';
+	         }else if('forumApp'==module_detail_name){   //论坛
+	         	  var postId = $param['postId'];
+	         	  var curClassId = $param['curClassId'];
+	              $('test_web').src = h5ip+"/post/info.controller?postId="+postId+"&curClassId="+curClassId+'&code='+code+'&fromPage=evo';
+	          }else if('logApp'==module_detail_name){   //日志
+	         	  var workLogId = $param['id'];
+	              $('test_web').src = h5ip+"/worklog/loadWorkLog.controller?workLogId="+workLogId+'&logFlag=0&code='+code+'&fromPage=evo';
+	         }else if('reportApp'==module_detail_name){   //汇报
+	         	  var receiveRecordId = $param['receiveRecordId'];
+	              $('test_web').src = h5ip+'/report/getSubReportDetail.controller?receiveRecordId='+receiveRecordId+'&cmdFlag=week'+'&code='+code+'&fromPage=evo';
+	         }else if('flowApp'==module_detail_name){     //流程
+	         	  var workMainLinkFile = $param['workMainLinkFile'];
+	         	  var workStatus = $param['workStatus'];
+	         	  var workId = $param['workId'];
+	         	  if(!workMainLinkFile){
+			    	  return '';
+			      }
+			      var flowUrl = '';
+				  if(workMainLinkFile.indexOf('/defaultroot/GovDocSendProcess!') > -1){
+					    flowUrl='/doc/sendGovProcess.controller?workStatus='+workStatus+'&workId='+workId+'&fromFlag=1';
+			      }else if(workMainLinkFile.indexOf('/defaultroot/GovSendFileLoadAction.do') > -1){
+			            flowUrl='/doc/sendGovProcess.controller?workStatus='+workStatus+'&workId='+workId+'&fromFlag=1';
+			      }else if(workMainLinkFile.indexOf('/defaultroot/wfopenflow!') > -1){
+			    	    flowUrl='/dealfile/process.controller?workStatus='+workStatus+'&workId='+workId+'&fromFlag=1';
+			      }else if(workMainLinkFile.indexOf('/defaultroot/WorkFlowProcAction.do') > -1){
+			            flowUrl='/dealfile/process.controller?workStatus='+workStatus+'&workId='+workId+'&fromFlag=1';
+			      }else if(workMainLinkFile.indexOf('/defaultroot/Information!') > -1){
+						 flowUrl='/information/process.controller?workStatus='+workStatus+'&workId='+workId+'&fromFlag=1';
+			      }else if(workMainLinkFile.indexOf('/defaultroot/InformationAction.do') > -1){
+						 flowUrl='/information/process.controller?workStatus='+workStatus+'&workId='+workId+'&fromFlag=1';
+			      }else if(workMainLinkFile.indexOf('/defaultroot/GovDocReceiveProcess!') > -1){
+						 flowUrl='/doc/receiveGovProcess.controller?workStatus='+workStatus+'&workId='+workId+'&fromFlag=1';
+			      }else if(workMainLinkFile.indexOf('/defaultroot/GovReceiveFileLoadAction.do') > -1){
+						 flowUrl='/doc/receiveGovProcess.controller?workStatus='+workStatus+'&workId='+workId+'&fromFlag=1';
+			      }else if(workMainLinkFile.indexOf('/defaultroot/voitureApply!modi.action') > -1){
+						 flowUrl='/dealfile/voitureProcess.controller?workStatus='+workStatus+'&workId='+workId+'&fromFlag=1';
+				  }else if(workMainLinkFile.indexOf('/defaultroot/outStockAction!modifyFlow.action') > -1){
+						 flowUrl='/dealfile/getOutStockResult.controller?workStatus='+workStatus+'&workId='+workId+'&fromFlag=1';
+				  }else if(workMainLinkFile.indexOf('/defaultroot/intoStockAction!modifyFlow.action') > -1){
+						 flowUrl='/dealfile/getIntoStockResult.controller?workStatus='+workStatus+'&workId='+workId+'&fromFlag=1';
+				  }else if(workMainLinkFile.indexOf('/defaultroot/GovDocSendCheckProcess!') > -1){
+						 flowUrl='/doc/sendfileCheckProcess.controller?workStatus='+workStatus+'&workId='+workId+'&fromFlag=1';
+				  }else{
+						flowUrl='/dealfile/process.controller?workStatus='+workStatus+'&workId='+workId+'&fromFlag=1';
+			      }
+	              $('test_web').src = h5ip+flowUrl+'&code='+code+'&fromPage=evo';
+	         }
+		
+		}
+		
+		//定位
+		function getLocation(){
+			$phone.locate({
+			   provider: 'network',
+			   success: function(location) {
+			      //hint('定位成功，经纬度：' + location.latitude + ', ' + location.longitude + ',\n地址：' + location.address);
+			      var add = location.latitude+';'+ location.longitude+';'+location.address;
+                  $('test_web').eval('locationCallback("' + add + '")');
+			   },
+			   error: function() {
+			       hint('定位失败！');
+			   }
+			});
+		}
+		
+		//扫码
+	    function getBarcode(){
+		    var qr = $phone.plugin("ImagQRCode");
+			qr.qrcode({
+			    complete: function(code) {
+			       //hint('扫描码：' + code);
+        		   $('test_web').eval('barcodeCallback("' + code + '")');
+			    }
+			});
+		}
+		
+		//wps编辑AppOffice控件
+		function dowps(url,fileId,name,filetype,moduleType){
+            var iAppOffice = $phone.plugin("ImagiAppOffice");
+            iAppOffice.openDoc({
+                url:url,
+                fileId:fileId,
+                userName:name,
+                fileType:filetype,
+                moduleType:moduleType,
+                enterReviseMode:true,
+                success:function(msg){
+                    //alert(msg)   //下载完成时回调
+                },
+                error:function(msg){
+                    alert(msg)  //下载失败时回调
+                }
+
+            });
+        }
+		
+		//pdf批注AppPDF控件
+		function dopdf(url,name){
+            var iAppPdf = $phone.plugin("ImagiAppPDF");
+            iAppPdf.openPdf({
+                url:url,
+                userName:name,
+                isCanFieldEdit:true,
+                isAnnotProtect:false,
+                isUseEbenSDK:false,
+                isSaveVector:true,
+                isVectorsign:true,
+                isSaveHistory:true,
+                isFillTemplate:false,
+                pageViewMode:'0',
+                success:function(msg){
+                    $('test_web').eval('pdfCallback("' + msg + '")');
+                },
+                error:function(msg){
+                    alert(msg)  //下载失败时回调
+                }
+            });
+        }
+		
+		//上传签批后的pdf文件、
+		function savePdf(path){
+        	$('sendPdf').action=evoUrl+"/ezOffice/desktop/savePdf.do";
+        	$("pdfatt").value = path;
+        	$('sendPdf').submit(function(data) {
+				//hint('上传成功');
+				
+            }, function(error) {
+                hint('文件提交失败！');
+            });
+        }
+		
+		function clickSubyz(filename,path,attachurlser,realName,fileType){
+		    var down = $phone.plugin("ImagDownloader");
+		    fileType = 'doc';
+		    if('pdf'==fileType){
+		    	 down.download(evoUrl+'/ezOffice/doc/pdf.do?url='+attachurlser+'&filename='+filename+'&uploadPath='+path+'&viewName='+realName);
+		    }else{
+		    	down.download(evoUrl+'/ezOffice/download/file.do?url='+attachurlser+'&filename='+filename+'&uploadPath='+path+'&viewName='+realName);
+		    }
+		    down.openDownloader();
+		}
+		
+		function toFilesManager(){
+			var down = $phone.plugin("ImagDownloader");
+            down.openDownloader();
+		}
+		
+		var g_workId = "";
+		function toOriginalForm(workId){   //webapp页面，调用方法，显示原表单
+     	     g_workId = workId ;
+		     $('topright').css('display','block');
+		}
+		
+		function ViewOriginalForm(){
+		//   $('test_web').exec('formCheck()');
+		   $('test_web').exec('subFormEvo("evo")');
+		    $page.setTimeout(function() {
+		       toOriginal();
+		    }, 1000);
+		}
+		function toOriginal(){
+			$page.open('dealfile/dealfile_process_original.xml?workId='+g_workId, {animation:'right-to-left'});
+		}
+		
+		
+		var originalFlag = '0';
+		function deleteOriginalFormView(){   //去除原表单显示
+		    originalFlag = '1';
+			$('topright').css('display','none');
+		}
+		
+		function closeEvoPage(){   //关闭当前页面。
+		    $page.close(0);
+		}
+		
+		function refreshH5Page(){
+		    hint("正在刷新页面...");
+			$('test_web').exec('window.location.reload();');
+		}
+		
+		
+		function goBack(){
+		    if(originalFlag == '1'){   //当originalFlag为1时的返回，表示是从加签、转办、转阅、退回页面，跳转回来的
+		    	$('topright').css('display','block');
+		    	originalFlag = '0';
+		    }else{
+		    	$('topright').css('display','none');
+		    }
+		//    $page.closeKeyboard();
+			$('test_web').exec('window.history.go(-1)');
+		}
+		
+		
+
+    ]]>
+    </script>
+    <page style="background:white" onback="goBack();">
+        <title>
+            <left>
+                <button onclick="goBack();" id="buttonback"  icon="mail_back.png" style="display:none;"/>
+                <button role="back" onclick="$page.close(0);" id="buttonclose" style="margin-left:-2;">关闭</button>
+            </left>
+            <center>
+                <label id='titlecenter'></label>
+            </center>
+            <right>
+            	<label style="align:right;color:white;font-size:18;margin-right:12;display:none;" id="topright" onclick="ViewOriginalForm()" >原表单</label>
+            </right>
+        </title>
+        <content>
+            <web id="test_web" include="uploadPreview.min.js" src="" progress="true" userAgent="evo/v5.0" style="progress-color:gray;"/>
+        </content>
+    </page>
+</imag>

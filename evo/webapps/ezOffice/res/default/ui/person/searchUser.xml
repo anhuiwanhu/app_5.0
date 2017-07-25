@@ -1,0 +1,427 @@
+<?xml version="1.0" encoding="utf-8"?>
+<imag>
+    <script>
+	    <![CDATA[
+	        var storage = $phone.localStorage();
+	        var dbName = storage.getItem('ezMobile_dbName');
+	        var evoUrl = storage.getItem('evoUrl');
+	        var searchUser = storage.getItem('inner_searchUser');
+	        var webServiceUrl = storage.getItem('picPath');
+	        var userId = storage.getItem('sys_sys_userId');
+	        var searchType='0';
+			$page.onload = function() {
+	            $('searchUser').value=searchUser;
+	            refreshOffLine();
+			}
+			
+			function containSpecial(s){
+				if(s!=''){
+					if(/[`~!@#\$%\^\&\*\(\)_\+<>《》？，。；、‘ “【】{}|（）=\?:"\{\},\.\-\\\/\\\/;'\[\]]/im.test(s)){
+						alert("搜索值不能为特殊字符，请重新输入！");
+						return true;
+					}
+				}
+				return false;
+			}
+			function refreshOffLine(){
+				if(containSpecial($('searchUser').value)){
+					$('searchUser').value='';
+					return;
+				}
+
+				var db = $phone.openDatabase(dbName);
+		        db.transaction(DbToCacheData_1);
+		        function DbToCacheData_1(tx) {
+		            $('userlist').clear();
+		       		var items = [];
+		       		var ishase = '0';
+					var searchUser = $('searchUser').value;
+					tx.executeSql('select userId,nickname,portraitUri,phone from offLineUserList where nickname like ? ',['%'+searchUser+'%'],
+					function(results){
+					  if(results.rows!=null && results.rows.length>0){
+							ishase = '1';
+							for(var i=0; i<results.rows.length; i++){
+								var user = results.rows.item(i);
+								items.push(creatUser(user));
+							}
+					   }
+					} , function(err){alert(err);});
+					if(ishase == '0'){
+						items.push(creatNo());
+					}
+					$('userlist').addMore({items: items});
+			        
+		        }
+	        
+			}
+			function creatUser(user){
+			   var userId = user.userId;
+		       var userName = user.nickname;
+		       var portraitUri = user.portraitUri;
+		       if(portraitUri.indexOf('noliving.gif')>-1){
+		       	 portraitUri = '';
+		       }else{
+		       	 portraitUri = webServiceUrl+portraitUri.substring(portraitUri.indexOf("peopleinfo/")+11);
+		       }
+		       var phone= user.phone;   
+		       var itemJson = {
+                   template:0,
+                   onclick:'perView("'+userId+'");',
+                   widgets:{
+                       photo:{src:portraitUri},
+                       cont:{text:userName},
+                       phone:{text:phone},
+                       call:{onclick:'toCall("'+phone+'");'},
+                   }
+                 }
+		      return itemJson;
+			}
+		
+			function perView(userId){
+				storage.setItem('inner_userId',userId);
+				$page.open('showInner.xml',{animation:'right-to-left'});
+			}
+			
+			function search(){
+				searchType='0';
+				refreshOffLine();
+			}
+		   
+		   function toCall(mobilePhone){
+		        if(mobilePhone ==''){
+		        	alert("无联系方式！");
+		        }else{
+		        	$phone.call(mobilePhone);
+		        }
+		   }
+		   //我的联系人
+		   function searchMan(){
+			searchType='1';
+			var manName = $('searchUser').value;
+			if(containSpecial(manName)){
+				$('searchUser').value='';
+				return;
+			}
+			var db = $phone.openDatabase(dbName);
+	        db.transaction(DbToCacheData_1);
+	        function DbToCacheData_1(tx) {
+	        	tx.executeSql('delete from linkMan');
+				getManList(manName);	
+			}
+		}
+		
+		function getManList(manName){
+	        	$http.progress({src:'loading.gif',text:''}).post(evoUrl+'/ezOffice/linkman/getMylinkmanList.do', 
+					{classId:''},function(data){
+					var obj = JSON.parse(data);
+					if(obj.logonerror &&obj.logonerror=='1'){
+	         		    alert("该账号已在设备"+obj.deviceId+"上登录");
+	         		    $page.open('../index.xml',{target:'_self'});
+	                    return;
+	                }
+					var result = obj.message.result;
+					if(result =="1"){
+						var list = obj.data.person;
+						saveLinkMan(list);
+					}
+					searchDate(manName);
+		   		},function(error) {
+					toErro(error);
+				});
+	        }
+			
+			function searchDate(manName){
+	        	var db = $phone.openDatabase(dbName);
+		        db.transaction(DbToCacheData_1);
+		        function DbToCacheData_1(tx) {
+		       		var items = [];
+			        tx.executeSql('select linkmanId,linkmanName,linkmanPhone,photo from linkMan where userId= ? and linkmanName like ?',[userId,'%'+manName+'%'],
+						function(results2){
+						  if(results2.rows!=null && results2.rows.length>0){
+								for(var i=0; i<results2.rows.length; i++){
+									var man = results2.rows.item(i);
+									items.push(creatMan(man));
+								}
+						   }else{
+						   		items.push(creatNo());
+						   }
+					     } , function(err2){alert(err2);});
+					$('linkmanList').update({items: items});
+					$('linkmanContent').hideTop();	
+				}
+	        }
+			
+			function saveLinkMan(list){
+				var db = $phone.openDatabase(dbName);
+			    db.transaction(populateDB);
+			    function populateDB(tx) {
+		    		if(list instanceof Array){
+						for(var i=0;i<list.length;i++){
+							var linkmanId = list[i].id;
+							var linkmanName = list[i].linkManName;
+							var linkmanPhone = list[i].mobilePhone;
+							var classId = list[i].classId;
+							var photo = list[i].linkManLivingPhoto;
+							var photo = "";
+							tx.executeSql('INSERT INTO linkMan (linkmanId,linkmanName,linkmanPhone,classId,photo,userId)'+
+		                		' VALUES ("'+linkmanId+'","'+linkmanName+'","'+linkmanPhone+'","'+classId+'","'+photo+'","'+userId+'")');
+							
+						}
+					}else if(list instanceof Object){
+						var linkmanId = list.id;
+							var linkmanName = list.linkManName;
+							var linkmanPhone = list.mobilePhone;
+							var classId = list.classId;
+							var photo = list.linkManLivingPhoto;
+							var photo = "";
+							tx.executeSql('INSERT INTO linkMan (linkmanId,linkmanName,linkmanPhone,classId,photo,userId)'+
+		                		' VALUES ("'+linkmanId+'","'+linkmanName+'","'+linkmanPhone+'","'+classId+'","'+photo+'","'+userId+'")');
+					}
+			    }
+			}
+			
+			function creatMan(man){
+	        	var linkmanId = man.linkmanId;
+	        	var linkmanName = man.linkmanName;
+	        	var linkmanPhone = man.linkmanPhone;
+	        	var firstname = "";
+	            if(linkmanName.length==0){
+	           	    linkmanName="";
+	            }else{
+	                firstname = linkmanName.substring(0,1); 
+	            }
+	        	var itemJson = {
+		            template :0,
+		            onclick : 'linkmanView("'+linkmanId+'","'+linkmanName+'");',
+		            widgets : {
+		                btn:{text:firstname},
+		                cont : {text:linkmanName},
+		                phone :{text:linkmanPhone}
+		            }
+		        }
+		       return itemJson;
+	        }
+			
+			function linkmanView(manId,manName){
+				storage.setItem('linkman_manId',manId);
+				storage.setItem('linkman_manName',manName);
+				$page.open('linkman_view.xml',{animation:'right-to-left'});
+			}
+		 
+		   
+		//我的群组
+		function searchGroup(){
+			searchType='2';
+			var name = $('searchUser').value;
+			if(containSpecial(name)){
+				$('searchUser').value='';
+				return;
+			}
+			var db = $phone.openDatabase(dbName);
+	        db.transaction(DbToCacheData_1);
+	        function DbToCacheData_1(tx) {
+	        	tx.executeSql('delete from groupList');
+				getGroupList(name);	
+			}
+		}   
+		
+		function getGroupList(name){
+	        	$http.progress({src:'loading.gif',text:''}).post(evoUrl+'/ezOffice/linkman/getMygroupList.do', 
+					{searchName:''},function(data){
+					var obj = JSON.parse(data);
+					if(obj.logonerror &&obj.logonerror=='1'){
+	         		    alert("该账号已在设备"+obj.deviceId+"上登录");
+	         		    $page.open('../index.xml',{target:'_self'});
+	                    return;
+	                }
+					var result = obj.message.result;
+					if(result =="1"){
+						var list = obj.data.list;
+						saveGroup(list);
+					}
+					readDate(name);
+		   		},function(error) {
+					toErro(error);
+				});
+	        }
+	        
+			function saveGroup(list){
+				var db = $phone.openDatabase(dbName);
+			    db.transaction(populateDB);
+			    function populateDB(tx) {
+			    	if(list instanceof Array){
+						for(var i=0;i<list.length;i++){
+							var groupId = list[i].groupId;
+							var groupName = list[i].groupName;
+							var innerNum = list[i].groupUnitUserNum;
+							var linkNum = list[i].groupMyUserNum;
+							var groupNum = parseInt(innerNum)+parseInt(linkNum);
+							tx.executeSql('INSERT INTO groupList (groupId,groupName,groupNum,userId)'+
+		                		' VALUES ("'+groupId+'","'+groupName+'","'+groupNum+'","'+userId+'")');
+							
+						}
+					}else if(list instanceof Object){
+							var groupId = list.groupId;
+							var groupName = list.groupName;
+							var innerNum = list.groupUnitUserNum;
+							var linkNum = list.groupMyUserNum;
+							var groupNum = parseInt(innerNum)+parseInt(linkNum);
+							tx.executeSql('INSERT INTO groupList (groupId,groupName,groupNum,userId)'+
+		                		' VALUES ("'+groupId+'","'+groupName+'","'+groupNum+'","'+userId+'")');
+					}
+			    }
+			}
+		   
+		   function readDate(name){
+	        	var db = $phone.openDatabase(dbName);
+		        db.transaction(DbToCacheData_1);
+		        function DbToCacheData_1(tx) {
+		       		var items = [];
+			        tx.executeSql('select groupId,groupName,groupNum from groupList where userId= ? and groupName like ?',[userId,'%'+name+'%'],
+					function(results){
+					  if(results.rows!=null && results.rows.length>0){
+							for(var i=0; i<results.rows.length; i++){
+								var group = results.rows.item(i);
+								items.push(creatGroup(group));
+							}
+					   }else{
+					   	    items.push(creatNo());
+					   }
+					} , function(err){alert(err);});
+					$('groupList').update({items: items});
+					$('groupContent').hideTop();
+				}
+	        }
+	        
+	        function creatGroup(group){
+	        	var groupId = group.groupId;
+	        	var groupName = group.groupName;
+	        	var groupNum = "人数 "+group.groupNum;
+	        	var itemJson = {
+		            template :0,
+		            onclick : 'groupView("'+groupId+'","'+groupName+'");',
+		            widgets : {
+		                cont : {text:groupName},
+		                num :{text:groupNum}
+		            }
+		        }
+		       return itemJson;
+	        }
+	        
+		   function groupView(groupId,groupName){
+		    	storage.setItem('mygroup_groupId',groupId);
+				storage.setItem('mygroup_groupName',groupName);
+		    	$page.open('group_add.xml',{animation:'right-to-left'});
+		    }
+		    
+		   function creatNo(){
+				var itemJson = {
+                    template : 1,
+                    onclick : '',
+                    widgets : {
+                        title : {text :'暂无相关记录'}
+                    }
+                }
+		       return itemJson;
+			}
+			
+			function searchAll(){
+			 	if(searchType=='0'){
+					search();
+				}else if(searchType=='1'){
+					searchMan();
+				}else if(searchType=='2'){
+					searchGroup();
+				}
+			}
+		   function toErro(error){
+				if (error == 'timeout') {
+					hint('连接服务器超时！');
+				} else if (error == '404') {
+					hint('链接超时重新登录！');
+				} else if (error == '500') {
+					hint('内部服务器错误！');
+				} else {
+					hint('访问网络错误！错误代码:' + error);
+				}
+				storage.setItem('isout','1');
+				$page.open('../index.xml',{animation:'down-to-up'});
+		}
+	     ]]>
+    </script> 
+    <page>
+       <title style="background:#3daffe;tint-color:white">
+            <left>
+                <button role="back"></button>
+            </left>
+            <center>
+                <label>通讯录</label>
+            </center>
+        </title>
+        <header>
+           <tabbar controlContents="true" style="background:#f9f9f9;label-color:#b8b8b8,#38adff;indicator-color:#38adff;">
+                <item label="单位联系人"  onchange="search();"></item>
+                <item label="我的联系人"  onchange="searchMan();"></item>
+                <item label="我的群组"  onchange="searchGroup();"></item>
+            </tabbar>
+           <row>
+               <input type="search" placeholder="请输入名称查询" id="searchUser" onclick="searchAll();"/>
+           </row>
+		</header>
+		<contents id="contens" draggable="true"  scrollable="true">
+			<content id="indexContent" draggable="true">
+	            <list id="userlist" reuse="true">
+	                <item style="col-width:45,*,30">
+	                    <col>
+	                    	<img reusekey="photo" style="height:35;width:35;" default="login_per.png" effect="round"></img>
+	                    </col>
+	                    <col>
+	                    	<label reusekey="cont" style="color:#555555;font-size:16"></label>
+	                    	<label reusekey="phone" style="color:#b8b8b8;font-size:12"></label>
+	                    </col>
+	                    <col>
+	                    	<button reusekey="call" style="background:person_phone.png;width:20;height:20;align:left;" ></button>
+	                    </col>
+	                    
+	                </item>
+	                <item>
+	                   <col><row><label reusekey="title" style="align:center;"></label></row></col>
+	                </item>
+	            </list>
+	        </content>
+	        <content id="linkmanContent" draggable="true">
+	            <list id="linkmanList" reuse="true">
+	                <item style="col-width:10,45,*">
+	                    <col></col>
+	                    <col>
+	                    	<button reusekey="btn" style="background:#f98e75;width:40;height:40;corner-radius:10;align:left;font-size:16;color:#ffffff"></button>
+	                    </col>
+	                    <col>
+	                    	<label reusekey="cont" style="color:#555555;font-size:16"></label>
+	                    	<label reusekey="phone" style="color:#b8b8b8;font-size:12"></label>
+	                    </col>
+	                </item>
+	                <item>
+	                   <col><row><label reusekey="title" style="align:center;"></label></row></col>
+	                </item>
+	            </list>
+	        </content>
+	        <content id="groupContent" draggable="true">
+	            <list id="groupList" reuse="true">
+	                <item style="col-width:45,*" >
+	                    <col>
+	                    	<img style="height:35;width:35;" default="group_list.png" effect="round"></img>
+	                    </col>
+	                    <col>
+	                    	<label reusekey="cont" style="color:#555555;font-size:16"></label>
+	                    	<label reusekey="num" style="color:#b8b8b8;font-size:12"></label>
+	                    </col>
+	                </item>
+	                <item>
+	                   <col><row><label reusekey="title" style="align:center;"></label></row></col>
+	                </item>
+	            </list>
+	        </content>
+		</contents>
+    </page>
+</imag>

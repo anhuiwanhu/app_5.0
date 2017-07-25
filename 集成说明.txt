@@ -50,3 +50,33 @@ ezOFFICE12.2产品(已集成补丁12.2 0.03）+ evo+(已集成补丁1.2 0.02）
 7、清除服务端缓存，启动evo服务
 
 8、验证系统功能
+
+
+
+
+
+
+
+
+
+补丁适用范围：
+
+ezOFFICE12.2产品(已集成补丁12.2 0.05）+ evo+(已集成补丁1、2）
+
+操作步骤：
+
+1、停evo服务
+
+2、备份程序、数据库
+
+3、覆盖程序补丁包到evo服务安装目录（d:\evo)
+
+4、把文件夹..\webapps\ezOffice\WEB-INF\classes\config.properties文件中apikey值删掉
+
+5、把文件夹..\webapps\ezOffice\res\default\ui下所有文件、文件夹拖入ui.zip(不要解压）
+
+6、连OA数据库执行sql文件夹下数据库升级脚本（分为oracle、sqlserver、mysql数据库）
+
+7、清除服务端缓存，启动evo服务
+
+8、验证系统功能

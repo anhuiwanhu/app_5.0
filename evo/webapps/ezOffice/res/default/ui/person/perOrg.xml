@@ -1,0 +1,508 @@
+<?xml version="1.0" encoding="utf-8"?>
+<imag>
+<script>
+<![CDATA[
+    var storage = $phone.localStorage();
+    var searchOrgId = storage.getItem('inner_searchOrgId');
+    var lastOrgName = storage.getItem('inner_lastOrgName');
+    var dbName = storage.getItem('ezMobile_dbName');
+    var userId = storage.getItem('sys_sys_userId');
+	var picPath = storage.getItem('picPath');
+    var evoUrl = storage.getItem('evoUrl');
+    var webServiceUrl = storage.getItem('picPath');
+    var deptArr = [];
+    var disp = '0';
+    var isFinish='1';
+    var header_backParent;
+    var header_hierarchy_item;
+    var allOrgNameLabel;
+
+    $page.onload = function() {
+       header_backParent = $('header_backParent');
+       header_hierarchy_item = $('header_hierarchy_item');
+       allOrgNameLabel = $('allOrgName');
+       first();
+	}
+	
+	function first(){
+		var syncTime = storage.getItem('offlinedatatimemis');
+		if(syncTime==null||syncTime=='null'||syncTime==''){
+			confirm({
+			       theme:'ios', 
+			       title:'', 
+			       message:'首次同步通讯录数据可能需要较长时间，是否确定同步?',
+			       okText:'确定', 
+			       cancelText:'取消', 
+			       ok:function(){display();setOffLineUsers();},
+			       cancel:function(){$page.close();}
+			 });
+		}else{
+			$('orgId').value = searchOrgId;
+			display();
+			setOffLineUsers();
+		}
+	}
+	
+	function hide(){
+	    isFinish='1';
+	    $('header_progress_item').css('display:none');
+    	$('progress_0').css('display:none');
+    }
+    function display(){
+        isFinish='0';
+        var syncTime = storage.getItem('offlinedatatimemis');
+        if(syncTime==null||syncTime=='null'||syncTime==''){
+          $('labtip').text="正在同步数据,首次加载较慢,请稍等………";
+        }else{
+          $('labtip').text="正在同步数据,请稍等………";
+        }
+        $('header_progress_item').css('display:block');
+    	$('progress_0').css('display:block');
+    }
+    
+    function setOffLineUsers(){
+		
+		   var storage = $phone.localStorage();
+		   var syncTime = storage.getItem('offlinedatatimemis');
+		   $http.post(evoUrl+'/ezOffice/contacts/getOffLineUserList.do?syncTime='+syncTime,
+		             '', 
+		      function(data) {
+                 var obj = JSON.parse(data);
+                 if(obj.logonerror && obj.logonerror=='1'){
+		          	alert("该账号已在设备"+obj.deviceId+"上登录");
+		          	storage.setItem('isout','1');
+		            $page.open('../index.xml',{target:'_self'});
+		            return;
+		         }
+		         saveOffLineDB(obj,syncTime);
+		         var thistimestr = new Date().getTime()+'';
+		         storage.setItem('offlinedatatimemis',thistimestr);
+		         hide();
+		         $('orgId').value = searchOrgId;
+                 gotoDeptById(searchOrgId, lastOrgName);
+                 
+			},function(error) {
+			    if (error == 'timeout') {
+					hint('连接服务器超时！');
+				} else if (error == '404') {
+					hint('链接超时重新登录！');
+				} else if (error == '500') {
+					hint('内部服务器错误！');
+				} else {
+					hint('访问网络错误！错误代码:' + error);
+				}
+				storage.setItem('isout','1');
+				$page.open('../index.xml',{target:'_self'});
+		    });
+		    
+		}
+		// 初始化header头
+		function initHeader(){
+			var header_hierarchy = "";
+			var allOrgName="";
+			for(var i=0; i<deptArr.length; i++){
+		    	if(i == (deptArr.length-1) || i=="0"){
+		    		allOrgName += deptArr[i].name;
+		    	}else{
+		    		allOrgName += deptArr[i].name +' \> ';
+		    	}
+	        }
+	        if(allOrgName.length > 30){
+	        	allOrgName = "..."+allOrgName.substring((allOrgName.length-30),allOrgName.length);
+	        }
+	        allOrgNameLabel.text=allOrgName;
+	        storage.setItem("dptl",deptArr.length);
+			// 判断返回上级
+			if(deptArr.length>1){
+				header_backParent.clear();
+				header_backParent.add($C('<label style="font-size:12;color:#38adff;" id="header_backParent_label" onclick="gotoDeptByHierarchy(\''+deptArr[deptArr.length-2].id+'\')" >返回上级</label>'));
+			}
+		}
+		// 通过Id直接返回到某个结点上
+		function gotoDeptByHierarchy(id){
+			var deptId = "";
+			var deptName = "";
+		    var num = -1;
+			for(var i=0; i<deptArr.length; i++){
+				if(deptArr[i].id == id){
+					num = i;
+					deptId = deptArr[i].id;
+					deptName = deptArr[i].name;
+					break;
+				}
+			}
+			if(num != -1){
+				deptArr.splice(num);
+			}
+			gotoDeptById(deptId, deptName);
+		}
+		function gotoDeptById(id,name,execFunc){
+		
+			if(id == searchOrgId){
+	           	hideHeaderHierarchy();
+	       	}else{
+	       		showHeaderHierarchy();
+	        }
+	        gotoDept(id, name, function(){
+       		if(execFunc == null || execFunc != false){
+       			loadDbContacts();
+           	}
+          	});
+	        
+	     }
+	     //跳转到相应部门
+		function gotoDept(id, name, func){
+			$("orgId").value = id;
+			if(func != null){
+				func();
+			}
+			if(id == searchOrgId){
+				deptArr = [];
+			}
+			deptArr.push({id:id, name:name});
+			initHeader();
+		}
+	     
+	     function loadDbContacts(){
+			$('contactList').clear();
+			var ishase = '0';
+			var seOrgId = $('orgId').value;
+			var dbName = storage.getItem('ezMobile_dbName');
+	    	var db = $phone.openDatabase(dbName);
+	        db.transaction(DbToCacheData_1);
+	        function DbToCacheData_1(tx) {
+	       		var items = [];
+		        //添加组织
+		        tx.executeSql('select id,deptName,orgHasJunior from offLineOrgList where parentId= ? order by sort asc',[seOrgId],
+				function(results){
+				  if(results.rows!=null && results.rows.length>0){
+						ishase = '1';
+						for(var i=0; i<results.rows.length; i++){
+							var org = results.rows.item(i);
+							items.push(creatOrg(org));
+						}
+				   }
+				} , function(err){alert(err);});
+
+		        //添加人员
+		        tx.executeSql('select userId,nickname,portraitUri,phone from offLineUserList where deptId= ? or sex like ?',[seOrgId,'%*'+seOrgId+'*%'],
+				function(results){
+				  if(results.rows!=null && results.rows.length>0){
+						ishase = '1';
+						hasMore = results.rows.item(0).hasMore;
+						for(var i=0; i<results.rows.length; i++){
+							var user = results.rows.item(i);
+							items.push(creatUser(user));
+						}
+				   }
+				} , function(err){alert(err);});
+				if(ishase == '0'){
+					items.push(creatNo());
+				}
+				$('contactList').addMore({items: items});
+	        }
+		}
+		
+		function perView(userId){
+			storage.setItem('inner_userId',userId);
+			$page.open('showInner.xml',{animation:'right-to-left'});
+		}
+
+	    function creatOrg(org){
+		   	   var orgId = org.id;
+	           var orgName = org.deptName;
+	           var orgHasJunior = org.orgHasJunior;
+	           var firstname = "";
+	           if(orgName.length==0){
+	           	   orgName="";
+	           }else{
+	               firstname = orgName.substring(0,1); 
+	           }
+	           
+	           var style = 'width:120;background:#f98e75;width:40;height:40;align:left;font-size:16;color:#ffffff';
+	           var itemJson = {
+	              template :0,
+	              onclick :'gotoDeptById("'+orgId+'","'+orgName+'")',
+	              widgets:{
+	                  btn:{text:firstname,style:style},
+	                  orgName:{text:orgName}
+	              }
+	           }
+	      	return itemJson;
+		}
+
+	    function creatUser(user){
+		   var userId = user.userId;
+	       var userName = user.nickname;
+	       var phone = user.phone;
+	       var photo= user.portraitUri;
+	       if(photo.indexOf('noliving.gif')>-1){
+	       	 photo = '';
+	       }else{
+	       	 photo = webServiceUrl+photo.substring(photo.indexOf("peopleinfo/")+11);
+	       }
+	       var itemJson = {
+	           template:1,
+	           onclick:'perView("'+userId+'");',
+	           widgets:{
+	               photo:{src:photo},
+	               cont:{text:userName},
+	               phone:{text:phone},
+	               call:{onclick:'toCall("'+phone+'");'}
+	           }
+	       }
+	      return itemJson;
+		}
+	    function creatNo(){
+			var itemJson = {
+	            template :2,
+	            onclick : '',
+	            widgets : {
+	                title : {text :'暂无相关记录'}
+	            }
+	        }
+	       return itemJson;
+		}
+	     
+	     // 隐藏面包屑导航
+	    function hideHeaderHierarchy(){
+	     	header_hierarchy_item.css("display", "none");
+	    }
+		// 显示面包屑导航
+	    function showHeaderHierarchy(){
+	        header_hierarchy_item.css("display", "");
+	    }
+    
+		function saveOffLineDB(obj,syncTime){
+		
+	       var db = $phone.openDatabase(dbName);
+	       db.transaction(populateDB);
+	      
+	       function populateDB(tx) {
+	        
+	        	if(obj.code && obj.code==200){
+		            var deptsNum = obj.result.deptsNum;
+		            var depts = obj.result.depts;
+		            if(depts!=null){
+			            if(depts instanceof Array){
+	                       for(var i=0;i < depts.length;i++){
+	                           var id = obj.result.depts[i].id;
+				               var deptName = obj.result.depts[i].deptName;
+				               var sort = obj.result.depts[i].sort;
+				               var timestamp = obj.result.depts[i].timestamp;
+				               var orgHasJunior = obj.result.depts[i].orgHasJunior;
+				               var parentId = obj.result.depts[i].parentId;
+				               var parentId = obj.result.depts[i].parentId;
+				               var status = obj.result.depts[i].status;
+				               //第一次同步
+				               if(syncTime==null||syncTime=='null'||syncTime==''){
+				                   tx.executeSql('INSERT INTO offLineOrgList (id,deptName,sort,timestamp,orgHasJunior,parentId) '+
+						                ' VALUES ("'+id+'","'+deptName+'","'+sort+'","'+timestamp+'","'+orgHasJunior+'","'+parentId+'")');
+				               }else{
+					               if(status=='ENABLED'){
+					                 tx.executeSql('delete from offLineOrgList where id="'+id+'"');
+					                 tx.executeSql('INSERT INTO offLineOrgList (id,deptName,sort,timestamp,orgHasJunior,parentId) '+
+						                ' VALUES ("'+id+'","'+deptName+'","'+sort+'","'+timestamp+'","'+orgHasJunior+'","'+parentId+'")');
+					               }else if(status=='REMOVED'){
+					                 tx.executeSql('delete from offLineOrgList where id="'+id+'"');
+					               }
+				               }
+	                       }
+			            }else if(depts instanceof Object){
+			               var id = obj.result.depts.id;
+			               var deptName = obj.result.depts.deptName;
+			               var sort = obj.result.depts.sort;
+			               var timestamp = obj.result.depts.timestamp;
+			               var orgHasJunior = obj.result.depts.orgHasJunior;
+			               var parentId = obj.result.depts.parentId;
+			               var parentId = obj.result.depts.parentId;
+			               var status = obj.result.depts.status;
+			               //第一次同步
+				           if(syncTime==null||syncTime=='null'||syncTime==''){
+				                   tx.executeSql('INSERT INTO offLineOrgList (id,deptName,sort,timestamp,orgHasJunior,parentId) '+
+						                ' VALUES ("'+id+'","'+deptName+'","'+sort+'","'+timestamp+'","'+orgHasJunior+'","'+parentId+'")');
+				           }else{
+					               if(status=='ENABLED'){
+					                 tx.executeSql('delete from offLineOrgList where id="'+id+'"');
+					                 tx.executeSql('INSERT INTO offLineOrgList (id,deptName,sort,timestamp,orgHasJunior,parentId) '+
+						                ' VALUES ("'+id+'","'+deptName+'","'+sort+'","'+timestamp+'","'+orgHasJunior+'","'+parentId+'")');
+					               }else if(status=='REMOVED'){
+					                 tx.executeSql('delete from offLineOrgList where id="'+id+'"');
+					               }
+			               }
+				                
+			            }
+		            }
+		            
+		            var deptMembersNum = obj.result.deptMembersNum;
+		            var deptMembers = obj.result.deptMembers;
+		            if(deptMembers != null){
+			            if(deptMembers instanceof Array){
+	                       for(var i=0;i < deptMembers.length;i++){
+	                           var userId = obj.result.deptMembers[i].userId;
+				               var deptId = obj.result.deptMembers[i].deptId;
+				               var userName = obj.result.deptMembers[i].user.userName;
+				               var nickname = obj.result.deptMembers[i].user.nickname;
+				               var portraitUri = obj.result.deptMembers[i].user.portraitUri;
+				               var region = obj.result.deptMembers[i].user.region;
+				               var phone = obj.result.deptMembers[i].user.phone;
+				               var email = obj.result.deptMembers[i].user.email;
+				               //var sex = obj.result.deptMembers[i].user.sex;//暂时用不到性别所以将其值代替存入兼职组织的id。
+				               var sex = obj.result.deptMembers[i].sidelineOrg;
+				               var empBusinessPhone = obj.result.deptMembers[i].user.empBusinessPhone;
+				               var dutyName = obj.result.deptMembers[i].duty.dutyName;
+				               var status = obj.result.deptMembers[i].user.status;
+				               //第一次同步
+				               if(syncTime==null||syncTime=='null'||syncTime==''){
+				                   tx.executeSql('INSERT INTO offLineUserList (userId,deptId,userName,nickname,portraitUri,region,phone,email,sex,empBusinessPhone,dutyName) '+
+						                ' VALUES ("'+userId+'","'+deptId+'","'+userName+'","'+nickname+'","'+portraitUri+'","'+region+'","'+phone+'","'+email+'","'+sex+'","'+empBusinessPhone+'","'+dutyName+'")');
+				               }else{
+					               if(status=='ENABLED'){
+					                 tx.executeSql('delete from offLineUserList where userId="'+userId+'"');
+					                 tx.executeSql('INSERT INTO offLineUserList (userId,deptId,userName,nickname,portraitUri,region,phone,email,sex,empBusinessPhone,dutyName) '+
+						                ' VALUES ("'+userId+'","'+deptId+'","'+userName+'","'+nickname+'","'+portraitUri+'","'+region+'","'+phone+'","'+email+'","'+sex+'","'+empBusinessPhone+'","'+dutyName+'")');
+					               }else if(status=='REMOVED'){
+					                 tx.executeSql('delete from offLineUserList where userId="'+userId+'"');
+					               }
+				               }
+	                       }
+			            }else if(deptMembers instanceof Object){
+			               var userId = obj.result.deptMembers.userId;
+			               var deptId = obj.result.deptMembers.deptId;
+			               var userName = obj.result.deptMembers.user.userName;
+			               var nickname = obj.result.deptMembers.user.nickname;
+			               var portraitUri = obj.result.deptMembers.user.portraitUri;
+			               var region = obj.result.deptMembers.user.region;
+			               var phone = obj.result.deptMembers.user.phone;
+			               var email = obj.result.deptMembers.user.email;
+			               //var sex = obj.result.deptMembers.user.sex;//暂时用不到性别所以将其值代替存入兼职组织的id。
+				           var sex = obj.result.deptMembers.sidelineOrg;
+			               var empBusinessPhone = obj.result.deptMembers.user.empBusinessPhone;
+			               var dutyName = obj.result.deptMembers.duty.dutyName;
+			               var status = obj.result.deptMembers.user.status;
+			               //第一次同步
+				           if(syncTime==null||syncTime=='null'||syncTime==''){
+				                 tx.executeSql('INSERT INTO offLineUserList (userId,deptId,userName,nickname,portraitUri,region,phone,email,sex,empBusinessPhone,dutyName) '+
+					                ' VALUES ("'+userId+'","'+deptId+'","'+userName+'","'+nickname+'","'+portraitUri+'","'+region+'","'+phone+'","'+email+'","'+sex+'","'+empBusinessPhone+'","'+dutyName+'")');
+				           }else{
+				               if(status=='ENABLED'){
+				                 tx.executeSql('delete from offLineUserList where userId="'+userId+'"');
+				                 tx.executeSql('INSERT INTO offLineUserList (userId,deptId,userName,nickname,portraitUri,region,phone,email,sex,empBusinessPhone,dutyName) '+
+					                ' VALUES ("'+userId+'","'+deptId+'","'+userName+'","'+nickname+'","'+portraitUri+'","'+region+'","'+phone+'","'+email+'","'+sex+'","'+empBusinessPhone+'","'+dutyName+'")');
+				               }else if(status=='REMOVED'){
+				                 tx.executeSql('delete from offLineUserList where userId="'+userId+'"');
+				               }
+			               }
+				                
+			            }
+		            }
+		     
+		            
+		         }
+	            
+	        }
+	    
+	   }
+	   
+	   function search(){
+			var su = $('searchUser').value;
+			if(containSpecial(su)){
+				$('searchUser').value='';
+				return;
+			}
+	        storage.setItem('inner_searchUser',su);
+			$page.open('searchUser.xml');
+		}
+		function containSpecial(s){
+			if(s!=''){
+				if(/[`~!@#\$%\^\&\*\(\)_\+<>《》？，。；、‘ “【】{}|（）=\?:"\{\},\.\-\\\/\\\/;'\[\]]/im.test(s)){
+					alert("搜索值不能为特殊字符，请重新输入！");
+					return true;
+				}
+			}
+			return false;
+		}
+		function backFun(){
+			if(isFinish=='0'){
+			  hint('正在同步数据');
+			}else{
+			  $page.closeKeyboard();
+			  $page.close();
+			}
+		}
+    
+    	function toCall(mobilePhone){
+	        if(mobilePhone ==''){
+	        	alert("无联系方式！");
+	        }else{
+	        	$phone.call(mobilePhone);
+	        }
+	   }
+]]>
+</script>
+    <page onback="backFun();">
+        <title style="background:#38adff;tint-color:white">
+            <left>
+                <button role="back" onclick="" style="display:none"></button>
+                <button id="back1" onclick="backFun();" icon="mail_back.png"></button>
+            </left>
+            <center>
+                <label>通讯录</label>
+            </center>
+        </title>
+        <header>
+        	 <list>
+                <item style="padding:0;">
+                    <row>
+				         <input type="search" placeholder="请输入姓名查询" id="searchUser" onclick="search();"/>
+                    </row>
+                </item>
+                <item id="header_hierarchy_item" style="col-width:*,10,60; padding:0 2; display:none;">
+                    <col>
+                    	<row style="height:40;" id="header_hierarchy">
+                    		<label style="font-size:12;color:#b8b8b8;" id="allOrgName"></label>
+                    	</row>
+                    </col>
+                    <col></col>
+                    <col>
+                        <row style="height:40;" id="header_backParent"></row>
+                    </col>
+            	</item>
+            	<item id="header_progress_item" style="col-width:30,*; padding:0 2; display:none;">
+            	   <col><row><progress id="progress_0"/></row></col><col><row><label id="labtip">正在同步数据………</label></row></col>
+            	</item>
+            </list>
+        </header>
+		<content id="indexContent" current="true">
+			<input type="hidden" id="orgId" value="0"/>
+			<list id="contactList" reuse="true">
+				<item style="col-width:45,*,20" accessory="indicator">
+                    <col>
+                       <button reusekey="btn"></button>
+                    </col>
+                    <col>
+                        <label reusekey="orgName" style="color:#555555;font-size:16"></label>
+                    </col>
+                    <col>
+                    	<label reusekey="orgNum" style="font-size:12;color:#b8b8b8;"></label>
+                    </col>
+                </item>
+                <item style="col-width:45,*,30">
+                    <col>
+                    	<img reusekey="photo" style="height:35;width:35;" default="login_per.png" effect="round"></img>
+                    </col>
+                    <col>
+                    	<label reusekey="cont" style="color:#555555;font-size:16"></label>
+                    	<label reusekey="phone" style="color:#b8b8b8;font-size:12"></label>
+                    </col>
+                    <col>
+                    	<button reusekey="call" style="background:person_phone.png;width:20;height:20;align:left;" ></button>
+                    </col>
+                </item>
+                <item>
+                   <col><row><label reusekey="title" style="align:center;">暂无相关记录</label></row></col>
+                </item>
+			</list>
+		</content>
+    </page>
+</imag>

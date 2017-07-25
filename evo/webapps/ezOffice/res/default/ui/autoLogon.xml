@@ -1,0 +1,149 @@
+<?xml version="1.0" encoding="utf-8"?>
+<imag mode="develop">
+    <script>
+    <![CDATA[
+        var storage = $phone.localStorage();
+        var evoUrl = storage.getItem('evoUrl');
+       	var dbName = "mobile_evo.db";
+		$page.onload = function() {
+			autologon();
+		}
+		
+		function autologon(){
+		    var userAccount = storage.getItem('login_userAccount');
+		    var password = storage.getItem('login_password');
+		    var isOtherSystem = storage.setItem('isOtherSystem');  //判断是不是其他系统的缓存的，其他系统缓存的密码是加密的
+		    var md5Pass='';
+		    if(isOtherSystem == 'yes'){
+		    	md5Pass = password;
+		    }else{
+		    	md5Pass = hex_md5(password);
+		    }
+		    var info = $phone.info();
+			var deviceId = info['deviceId'];
+			var platform = info['platform'];
+			var versionCode = info['versionCode'];
+			var appCode = info['appCode'];
+		   $http.progress({src:'loading.gif',text:''}).post(evoUrl+'/ezOffice/desktop/logon.do',
+		              {username:userAccount,mdPass:md5Pass,deviceId:deviceId,platform:platform,versionCode:versionCode,appCode:appCode},
+		        function(data) {
+		          if(data){
+		              var obj = JSON.parse(data);
+		              if(obj.result=="1"){
+		                  storage.setItem('sys_userAccount',obj.userAccount);
+						  storage.setItem('sys_sys_userId',obj.userId);
+						  storage.setItem('sys_orgId',obj.orgId);
+						  storage.setItem('sys_domainId',obj.domainId);
+						  storage.setItem('sys_userName',obj.userName);
+						  storage.setItem('sys_orgName',obj.orgName);
+						  storage.setItem('sys_orgShortName',obj.orgShortName);
+						  storage.setItem('sys_orgIdString',obj.orgIdString);
+						  storage.setItem('sys_orgSimpleName',obj.orgSimpleName);
+						  storage.setItem('sys_userSimpleName',obj.userSimpleName);
+						  storage.setItem('sys_fileType',obj.fileType);
+						  storage.setItem('sys_fileserver',obj.fileserver);
+						  storage.setItem('sys_httpserver',obj.httpserver);
+						  storage.setItem('sys_server',obj.server);
+						  storage.setItem('serverUrl',obj.server);
+						  storage.setItem('webServiceUrl',obj.webServiceUrl);
+						  storage.setItem('sys_key',obj.key);
+						  storage.setItem('picPath',obj.picPath);
+						  if(obj.sys_photoName!=''){
+						     storage.setItem('sys_photoName', evoUrl+'/ezOffice/imges/peopleinfo/'+obj.sys_photoName);
+						  }else{
+						     storage.setItem('sys_photoName', '');
+						  }
+						  storage.setItem('sys_phone',obj.sys_phone);
+						  storage.setItem('sys_empDuty',obj.sys_empDuty);
+						  storage.setItem('sys_location',obj.sys_location);
+						  storage.setItem('sys_evoword',obj.sys_evoword);
+						  storage.setItem('sys_oaPdf',obj.sys_oaPdf);
+						  storage.setItem('ezMobile_dbName',dbName);
+						  setMyTopOrg(obj.myTopOrg);
+						  $page.open('desktop.xml?showTab=pubtab', {animation:'right-to-left',target:'_self'});
+						}else{
+						 	alert(obj.description);
+						 	storage.setItem('isout','1');
+						 	$page.open('index.xml',{animation:'right-to-left',target:'_self'});
+						}
+		          }
+		       },function(error) {
+			    if (error == 'timeout') {
+			        hint('连接服务器超时！');
+			    } else if (error == '404') {
+			        hint('链接超时重新登录！');
+			    } else if (error == '500') {
+			        hint('内部服务器错误！');
+			    } else {
+			        hint('访问网络错误！错误代码:' + error);
+			    }
+			    storage.setItem('isout','1');
+			    $page.open('index.xml',{animation:'right-to-left'});
+		    });
+		}
+		
+		function setCustMenuDB(obj){
+		    var db = $phone.openDatabase(dbName);
+		    db.transaction(populateDB);
+		    function populateDB(tx) {
+		        tx.executeSql('delete from custmenu');
+		        if(obj instanceof Array){
+			        for(var i=0; i<obj.length; i++){
+			          tx.executeSql('INSERT INTO custmenu (mobileMenuCode,mobileMenuDisplayName,imgName,isSystem,cusMenuId,webUrl,showImg) '+
+			          ' VALUES ("'+obj[i].mobileMenuCode+'","'+obj[i].mobileMenuDisplayName+'","'+obj[i].imgName+'","'+obj[i].isSystem+'","'+obj[i].cusMenuId+'","'+obj[i].webUrl+'","'+obj[i].showImg+'")');
+			        }
+		        }else if(obj.mobilemenu instanceof Object){
+		            tx.executeSql('INSERT INTO custmenu (mobileMenuCode,mobileMenuDisplayName,imgName,isSystem,cusMenuId,webUrl,showImg) '+
+			          ' VALUES ("'+obj.mobilemenu.mobileMenuCode+'","'+obj.mobilemenu.mobileMenuDisplayName+'","'+obj.mobilemenu.imgName+'","'+obj.mobilemenu.isSystem+'","'+obj.mobilemenu.cusMenuId+'","'+obj.mobilemenu.webUrl+'","'+obj.mobilemenu.showImg+'")');
+			        
+		        }
+		    }
+		}
+		function setMyTopOrg(obj){
+		    var db = $phone.openDatabase(dbName);
+		    db.transaction(populateDB);
+		    function populateDB(tx) {
+		        tx.executeSql('delete from myTopOrg');
+		        var persondata = obj.data.list;
+		        if(persondata instanceof Array){
+			        for(var i=0;i<persondata.length;i++){
+			          var orgId = persondata[i].orgId;
+				      var orgName = persondata[i].orgName;
+	
+			          tx.executeSql('INSERT INTO myTopOrg (orgId,orgName) VALUES ("'+orgId+'","'+orgName+'")');
+			        }
+		        }else if(persondata instanceof Object){
+		            var orgId = persondata.orgId;
+			        var orgName = persondata.orgName;
+
+		            tx.executeSql('INSERT INTO myTopOrg (orgId,orgName) VALUES ("'+orgId+'","'+orgName+'")');
+		        }
+		    }
+		}
+		
+		 //物理返回直接退出
+        function physicalReturn(){
+	       exit();
+	    }
+            
+    ]]>
+    </script> 
+	<page include="md5.js" onback="physicalReturn()">
+        <title style="background:#3DAFFE">
+            <left>
+                <button style="background:null" onclick=";"/>
+            </left>
+           <center>
+              <icon src="logo.png" style="align:center;"/>
+		   </center>
+        </title>
+	   <content style="margin:0 5;background:#ffffff" >
+            <list style="background:#f8f8f8">
+     <!--           <item style="col-width:40%,*;">
+                    <col><label>正在登入...</label></col>
+                    <col><progress type="whitelarge" style="tint-color:blue"/></col>
+                </item>  --> 
+            </list>
+        </content>
+	</page>
+</imag>

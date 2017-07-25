@@ -1,0 +1,357 @@
+<?xml version="1.0" encoding="utf-8"?>
+<imag>
+    <script>
+	    <![CDATA[
+	        var storage = $phone.localStorage();
+	        var evoUrl = storage.getItem('evoUrl');
+	        var searchOrgId = storage.getItem('inner_searchOrgId');
+        	var lastOrgName = storage.getItem('inner_lastOrgName');
+        	if(lastOrgName !='' && lastOrgName.length > 14){
+	        	lastOrgName = lastOrgName.substring(0,14)+'...';
+	        }
+	        var addMore='0';
+	        var disp='0';
+	        var curpage = '1';
+			$page.onload = function() {
+	            $("lastOrgName").text=lastOrgName;
+	            //var data = storage.getItem('myOrg'+searchOrgId);
+	    		refresh();
+			}
+			
+			function peoToPage(data){
+				$('indexContent').showBottom();
+				$('bottom_more').css('display','none');
+	    		if(data!=null && data!= ''){
+	    			var obj = JSON.parse(data);
+					var result = obj.message.result;
+					var listJson = {items:[]};
+					if(result =="1"){
+						var recordCount = obj.data.recordCount;
+						if(parseInt(recordCount) <=0){
+							var itemJson = {
+			                    template : 1,
+			                    onclick : '',
+			                    widgets : {
+			                        title : {text :'暂无相关记录'}
+			                    }
+			                }
+			                listJson.items.push(itemJson);
+							$('userlist').update(listJson);
+							$('indexContent').hideBottom();
+							$('indexContent').hideTop();
+							addMore='0';
+						}else{
+							var pageCount = obj.data.pageCount;
+							var picRootPath = obj.picRootPath;
+			                var list = obj.data.person;
+			                if(list instanceof Array){
+		                		for(var i=0;i<list.length;i++){
+		                			var userId = list[i].id;
+							        var userName = list[i].linkManName+"."+list[i].linkManDepart;
+							        var mobilePhone = list[i].mobilePhone+"";
+							        if(mobilePhone ==null || mobilePhone ==""){
+							        	mobilePhone="";
+							        }
+							        var empLivingPhoto=evoUrl+"/ezOffice/imges/forum_def.png";
+							        if(list[i].empLivingPhoto != "" && list[i].empLivingPhoto != "null" && list[i].empLivingPhoto != null){
+			        					empLivingPhoto = picRootPath+list[i].empLivingPhoto;
+			        				}
+							        var itemJson = {
+					                    template:0,
+					                    onclick:'perView("'+userId+'");',
+					                    widgets:{
+					                        photo:{src:empLivingPhoto},
+					                        cont:{text:userName},
+					                        phone:{text:mobilePhone},
+					                        call:{onclick:'toCall("'+mobilePhone+'");'}
+					                    }
+					                  }
+					                listJson.items.push(itemJson);
+		                		}
+		                	}else if(list instanceof Object){
+		                		var userId = list.id;
+						        var userName = list.linkManName+"."+list.linkManDepart;
+						        var mobilePhone = list.mobilePhone+"";
+						        if(mobilePhone ==null || mobilePhone ==""){
+						        	mobilePhone="";
+						        }
+						        var empLivingPhoto=evoUrl+"/ezOffice/imges/forum_def.png";
+							    if(list.empLivingPhoto != "" && list.empLivingPhoto != "null" && list.empLivingPhoto != null){
+			        				empLivingPhoto = picRootPath+list.empLivingPhoto;
+			        			}
+						        var itemJson = {
+				                    template:0,
+				                    onclick:'perView("'+userId+'");',
+				                    widgets:{
+				                        photo:{src:empLivingPhoto},
+				                        cont:{text:userName},
+				                        phone:{text:mobilePhone},
+				                        call:{onclick:'toCall("'+mobilePhone+'");'}
+				                    }
+				                  }
+				                listJson.items.push(itemJson);
+		                	}
+			                $('userlist').addMore(listJson);
+		                	if(parseInt(curpage) < parseInt(pageCount)){
+	                			$('bottom_more').css('display','block');
+	                			disp='1';
+	                			onscrollbottomFlag = 'true';
+		                	}else{
+		                		$('indexContent').hideBottom();
+		                		disp='0';
+		                		onscrollbottomFlag = 'false';
+		                	}
+		                	$('indexContent').hideTop();
+							addMore='0';
+						}
+					}else{
+						var itemJson = {
+		                    template : 1,
+		                    onclick : '',
+		                    widgets : {
+		                        title : {text :'暂无相关记录'}
+		                    }
+		                }
+		                listJson.items.push(itemJson);
+						$('userlist').update(listJson);
+						$('indexContent').hideBottom();
+						$('indexContent').hideTop();
+						addMore='0';
+				}
+	    		}
+			}
+			
+			function containSpecial(s){
+				if(s!=''){
+					if(/[`~!@#\$%\^\&\*\(\)_\+<>《》？，。；、‘ “【】{}|（）=\?:"\{\},\.\-\\\/\\\/;'\[\]]/im.test(s)){
+						alert("搜索值不能为特殊字符，请重新输入！");
+						return true;
+					}
+				}
+				return false;
+			}
+			
+			function refresh(){
+				$('indexContent').showBottom();
+				if(containSpecial($('searchuser').value)){
+					$('searchuser').value='';
+					return;
+				}
+				if(addMore=='1'){
+					return;
+				}
+				addMore='1';
+				if(curpage=="1"){
+					$('userlist').clear();
+				}
+				$http.progress({src:'loading.gif',text:''}).post(evoUrl+'/ezOffice/contacts/inner.do', 
+					{curpage:curpage,searchuser:$('searchuser').value,searchOrgId:searchOrgId}, function(data) {
+					if(data!=null && data!= '' && $('searchuser').value==''){
+			            storage.setItem('myOrg'+searchOrgId,data);   //将返回数据放入缓存中。
+			         }
+					var obj = JSON.parse(data);
+					if(obj.logonerror &&obj.logonerror=='1'){
+	         		    alert("该账号已在设备"+obj.deviceId+"上登录");
+	         		    $page.open('../index.xml',{target:'_self'});
+	                    return;
+	                }
+					var result = obj.message.result;
+					var listJson = {items:[]};
+					if(result =="1"){
+						var recordCount = obj.data.recordCount;
+						if(parseInt(recordCount) <=0){
+							var itemJson = {
+			                    template : 1,
+			                    onclick : '',
+			                    widgets : {
+			                        title : {text :'暂无相关记录'}
+			                    }
+			                }
+			                listJson.items.push(itemJson);
+							$('userlist').update(listJson);
+							$('indexContent').hideBottom();
+							$('indexContent').hideTop();
+							addMore='0';
+						}else{
+							var pageCount = obj.data.pageCount;
+							var picRootPath = obj.picRootPath;
+			                var list = obj.data.person;
+			                if(list instanceof Array){
+		                		for(var i=0;i<list.length;i++){
+		                			var userId = list[i].id;
+							        var userName = list[i].linkManName+"."+list[i].linkManDepart;
+							        var mobilePhone = list[i].mobilePhone+"";
+							        if(mobilePhone ==null || mobilePhone ==""){
+							        	mobilePhone="";
+							        }
+							        var empLivingPhoto=evoUrl+"/ezOffice/imges/forum_def.png";
+							        if(list[i].empLivingPhoto != "" && list[i].empLivingPhoto != "null" && list[i].empLivingPhoto != null){
+			        					empLivingPhoto = picRootPath+list[i].empLivingPhoto;
+			        				}
+							        var itemJson = {
+					                    template:0,
+					                    onclick:'perView("'+userId+'");',
+					                    widgets:{
+					                        photo:{src:empLivingPhoto},
+					                        cont:{text:userName},
+					                        phone:{text:mobilePhone},
+					                        call:{onclick:'toCall("'+mobilePhone+'");'}
+					                    }
+					                  }
+					                listJson.items.push(itemJson);
+		                		}
+		                	}else if(list instanceof Object){
+		                		var userId = list.id;
+						        var userName = list.linkManName+"."+list.linkManDepart;
+						        var mobilePhone = list.mobilePhone+"";
+						        if(mobilePhone ==null || mobilePhone ==""){
+						        	mobilePhone="";
+						        }
+						        var empLivingPhoto=evoUrl+"/ezOffice/imges/forum_def.png";
+							    if(list.empLivingPhoto != "" && list.empLivingPhoto != "null" && list.empLivingPhoto != null){
+			        				empLivingPhoto = picRootPath+list.empLivingPhoto;
+			        			}
+						        var itemJson = {
+				                    template:0,
+				                    onclick:'perView("'+userId+'");',
+				                    widgets:{
+				                        photo:{src:empLivingPhoto},
+				                        cont:{text:userName},
+				                        phone:{text:mobilePhone},
+				                        call:{onclick:'toCall("'+mobilePhone+'");'}
+				                    }
+				                  }
+				                listJson.items.push(itemJson);
+		                	}
+			                $('userlist').addMore(listJson);
+		                	if(parseInt(curpage) < parseInt(pageCount)){
+	                			$('bottom_more').css('display','block');
+	                			disp='1';
+	                			onscrollbottomFlag = 'true';
+		                	}else{
+		                		$('indexContent').hideBottom();
+		                		disp='0';
+		                		onscrollbottomFlag = 'false';
+		                	}
+		                	$('indexContent').hideTop();
+							addMore='0';
+						}
+					}else{
+						var itemJson = {
+		                    template : 1,
+		                    onclick : '',
+		                    widgets : {
+		                        title : {text :'暂无相关记录'}
+		                    }
+		                }
+		                listJson.items.push(itemJson);
+						$('userlist').update(listJson);
+						$('indexContent').hideBottom();
+						$('indexContent').hideTop();
+						addMore='0';
+				}
+		   		},function(error) {
+					toErro(error);
+				});
+			}
+			
+			function downfrsh(){
+				curpage = parseInt(curpage)+1+"";
+				$('bottom_more').css('display','none');
+				refresh();
+			}
+			
+			function searchMail(){
+				$('bottom_more').css('display','none');
+				curpage = '1';
+				refresh();
+			}
+			function upfrsh(){
+		   		$('bottom_more').css('display','none');
+	            $('indexContent').showBottom();
+		   		curpage = '1';
+		   		onscrollbottomFlag = 'true';
+				refresh();
+		   }
+		var onscrollbottomFlag = 'true';
+        function scrollbottom(){    //禁止多次上拉，所有数据加载完毕禁止上拉
+            if(onscrollbottomFlag == 'true'){
+            	onscrollbottomFlag = 'false';
+            	downfrsh();
+            }
+        }
+	        
+		function perView(userId){
+			storage.setItem('inner_userId',userId);
+			$page.open('showInner.xml',{animation:'right-to-left'});
+		}
+		
+		function toCall(mobilePhone){
+	        if(mobilePhone ==''){
+	        	alert("无联系方式！");
+	        }else{
+	        	$phone.call(mobilePhone);
+	        }
+	   }
+		
+		function toErro(error){
+			if (error == 'timeout') {
+				hint('连接服务器超时！');
+			} else if (error == '404') {
+				hint('链接超时重新登录！');
+			} else if (error == '500') {
+				hint('内部服务器错误！');
+			} else {
+				hint('访问网络错误！错误代码:' + error);
+			}
+			storage.setItem('isout','1');
+			$page.open('../index.xml',{animation:'down-to-up'});
+		}
+	     ]]>
+    </script> 
+    <page>
+       <title style="background:#3daffe;tint-color:white">
+            <left>
+                <button role="back" onclick="" style="display:none"></button>
+                <button onclick="$page.closeKeyboard();$page.close();" icon="mail_back.png"></button>
+            </left>
+            <center>
+                <label id="lastOrgName"></label>
+            </center>
+        </title>
+         <header>
+            <row style="text-align:center;">
+			   <input type="search" id="searchuser" onclick="searchMail();" placeholder="请输入姓名查询"/>
+		    </row>
+        </header>
+        <content id="indexContent" draggable="true" ondragdown="upfrsh();" onscrollbottom="scrollbottom();">
+            <list id="userlist" reuse="true" onscrollbottom="scrollbottom();">
+                <item style="col-width:45,*,30">
+                    <col>
+                    	<img reusekey="photo" style="height:35;width:35;" default="login_per.png" effect="round"></img>
+                    </col>
+                    <col>
+                    	<label reusekey="cont" style="color:#555555;font-size:16"></label>
+                    	<label reusekey="phone" style="color:#b8b8b8;font-size:12"></label>
+                    </col>
+                    <col>
+                    	<button reusekey="call" style="background:person_phone.png;width:20;height:20;align:left;" ></button>
+                    </col>
+                </item>
+                <item>
+                   <col><row><label reusekey="title" style="align:center;"></label></row></col>
+                </item>
+            </list>
+            <bottom id="bottom" style="display:none">
+	            <list>
+	                <item style="background:null,#DEE3E7">
+	                    <row id="bottom_more" style="display:none">
+	                        <label style="align:center;">上拉加载更多...</label>
+	                        <progress id="globalProgress" style="display:hidden;align:center;"/>
+	                    </row>
+	                </item>
+	            </list>
+	        </bottom>
+        </content>
+    </page>
+</imag>

@@ -1,0 +1,378 @@
+<?xml version="1.0" encoding="utf-8"?>
+<imag mode="develop">
+    <script>
+    <![CDATA[
+        var storage = $phone.localStorage();
+        var versionNumber="V5.0";
+       	var dbName = "mobile_evo.db";
+        	var evoUrl = "http://192.168.7.99:8080"; 
+       	var outerNetWebserviceUrl="http://61.190.4.70:50155/defaultroot/";
+		$page.onload = function() {
+		    //判断版本号不一致就更新
+		    var curVersionNumber = storage.getItem('curVersionNumber');
+		    if(curVersionNumber==null){
+		    	storage.setItem('curVersionNumber',versionNumber);
+		    	$page.open('index.xml',{target:'_self'});
+		    }else if(curVersionNumber=='' ||curVersionNumber!=versionNumber){
+		        clearlogin();
+		        storage.setItem('curVersionNumber',versionNumber);
+		        storage.setItem('login_remember','false');
+		        $page.open('index.xml',{target:'_self'});
+		    }
+		    //自动登录
+		    var autologin = storage.getItem('autologin');
+		    var isout = storage.getItem('isout');
+		    storage.setItem('isout','0');
+	//	    var seesionStorage = $phone.sessionStorage();
+		//	var parameters = seesionStorage.getItem("app_parameters");
+		//	parameters= '{"username":"hanb","password":"111111"}';
+			if (false) {    
+				var params = JSON.parse(parameters);    
+				var username = params['username'];    
+				var password = params['password'];
+				storage.setItem('login_userAccount',username);
+				storage.setItem('login_password',password);
+				storage.setItem('isOtherSystem','yes');  //其他系统的是加密的密码
+				var sys_photoName = storage.getItem('sys_photoName');
+				var item = $C('<list-item ><item style="col-valign:center"><col><row><img effect="round" id="myphotoimg" '+
+				' style="align:center;width:90;height:90;" default="login_per.png" '+
+				' src="'+sys_photoName+'"/></row></col></item></list-item>');
+				$('myphotoimg_list').add(item);
+           	    $page.open('autoLogon.xml', {animation:'right-to-left',target:'_self'});
+			}else if(autologin=="true" && isout!="1"){
+           	   	var sys_photoName = storage.getItem('sys_photoName');
+           	   	storage.setItem('isOtherSystem','no');
+				var item = $C('<list-item ><item style="col-valign:center"><col><row><img effect="round" id="myphotoimg" '+
+				' style="align:center;width:90;height:90;" default="login_per.png" '+
+				' src="'+sys_photoName+'"/></row></col></item></list-item>');
+				$('myphotoimg_list').add(item);
+           	    $page.open('autoLogon.xml', {animation:'right-to-left',target:'_self'});
+           	}else{
+           		getLognImg();
+				var info = $phone.info();
+				$('deviceId').value = info['deviceId'];
+				$('platform').value = info['platform'];
+				$('versionCode').value = info['versionCode'];
+				$('appCode').value = info['appCode'];
+				$('evoUrl').value = evoUrl;
+	            storage.setItem('evoUrl',evoUrl);
+	            storage.setItem('outerNetWebserviceUrl',outerNetWebserviceUrl);
+	            storage.setItem('isOtherSystem','no');
+			    $('loginForm').action=evoUrl+"/ezOffice/desktop/logon.do";
+			    var login_remember = storage.getItem('login_remember');
+			    if(login_remember=='true'){
+			      $('remember').checked='true';
+			    }else{
+			      $('remember').checked='false';
+			    }
+			    if(autologin=="true"){
+	           	   $('loginset').checked="true";
+	           	}else{
+			       $('loginset').checked='false';
+			    }
+			    var login_userAccount = storage.getItem('login_userAccount');
+			    if(login_userAccount==null||login_userAccount=="null") login_userAccount="";
+				var login_password = storage.getItem('login_password');
+				if(login_password==null||login_password=="")login_password="";
+
+				$('username').value = login_userAccount;
+				$('password').value = login_password;
+				var sys_photoName = storage.getItem('sys_photoName');
+				var item = $C('<list-item ><item style="col-valign:center"><col><row><img effect="round" id="myphotoimg" '+
+				' style="align:center;width:90;height:90;" default="login_per.png" '+
+				' src="'+sys_photoName+'"/></row></col></item></list-item>');
+				$('myphotoimg_list').add(item);
+			}    
+		}
+		
+		//获取logo图片
+		function getLognImg(){
+			$http.post(evoUrl+'/ezOffice/desktop/getLognImg.do',{},function(data){
+			    var obj = JSON.parse(data);
+				var lognImg = obj.lognImg;
+				$('lognImg').src = lognImg;
+				$('lognImg').css('align','center');
+			},function(error) {
+				 if (error == 'timeout') {
+			        hint('连接服务器超时！');
+			    } else if (error == '404') {
+			        hint('链接超时重新登录！');
+			    } else if (error == '500') {
+			        hint('内部服务器错误！');
+			    } else {
+			        hint('访问网络错误！错误代码:' + error);
+			    }
+			});
+		}
+		
+		function initDB(){
+		    var db = $phone.openDatabase(dbName);
+		    db.transaction(creattabDB, errorcreateDB, successcreateDB);
+		    function creattabDB(tx) {
+		        tx.executeSql('DROP TABLE IF EXISTS myInfoChannel');
+		        tx.executeSql('CREATE TABLE IF NOT EXISTS myInfoChannel(channelId,channelName,isCanAdd,channelNeedCheckup)');
+		        tx.executeSql('DROP TABLE IF EXISTS custmenu');
+		        tx.executeSql('CREATE TABLE IF NOT EXISTS custmenu(mobileMenuCode,mobileMenuDisplayName,imgName,isSystem,cusMenuId,webUrl,showImg)'); 
+		        tx.executeSql('DROP TABLE IF EXISTS myApp');
+		        tx.executeSql('CREATE TABLE IF NOT EXISTS myApp(AppId,AppValue,clickvar1,imgg,appname,clickvar2,topname,titlename,workTime,userId)');
+		        tx.executeSql('DROP TABLE IF EXISTS myTopOrg');
+		        tx.executeSql('CREATE TABLE IF NOT EXISTS myTopOrg(orgId,orgName)');
+		   		tx.executeSql('DROP TABLE IF EXISTS workflow_list');
+		        tx.executeSql('CREATE TABLE IF NOT EXISTS workflow_list(moduleId,packageId,pool_processId,pool_processName,pool_process_type,pool_oldprocess_id,pool_oldprocess_formid,pool_ezflowprocess_key,pool_ezflowprocess_defid,pool_ezflowprocess_formKey,userId)');
+		        tx.executeSql('DROP TABLE IF EXISTS linkManclass');
+		        tx.executeSql('CREATE TABLE IF NOT EXISTS linkManclass(classId,className,linkManNum,userId)');
+		        tx.executeSql('DROP TABLE IF EXISTS linkMan');
+		        tx.executeSql('CREATE TABLE IF NOT EXISTS linkMan(linkmanId,linkmanName,linkmanPhone,classId,photo,userId)');
+		        tx.executeSql('DROP TABLE IF EXISTS groupList');
+		        tx.executeSql('CREATE TABLE IF NOT EXISTS groupList(groupId,groupName,groupNum,userId)');
+		        tx.executeSql('DROP TABLE IF EXISTS offLineOrgList');
+		        tx.executeSql('CREATE TABLE IF NOT EXISTS offLineOrgList(id,deptName,sort,timestamp,orgHasJunior,parentId)');
+		        tx.executeSql('DROP TABLE IF EXISTS offLineUserList');
+		        tx.executeSql('CREATE TABLE IF NOT EXISTS offLineUserList(userId,deptId,userName,nickname,portraitUri,region,phone,email,sex,empBusinessPhone,dutyName)');
+		    }
+		    function errorcreateDB(err) {
+		      hint(err);
+		    }
+		    function successcreateDB() {
+		       var local = $phone.localStorage();
+		       local.setItem('isCreateDB','1');
+		       hint('初始化数据成功！');
+		    } 
+		}
+		
+		function logon(){
+		    $('username').value = $('username').value.replace(/(^\s*)|(\s*$)/g, "");
+		    $('password').value = $('password').value.replace(/(^\s*)|(\s*$)/g, "");
+		    if($('username').value==""){
+		       alert("请输入账号！");
+		       return ;
+		    }
+		    if($('password').value==""){
+		       alert("请输入密码！");
+		       return ;
+		    }
+		    var password = $('password').value;
+		    var md5Pass = hex_md5(password);
+		    $('mdPass').value = md5Pass;
+		    storage.setItem('sys_password',password);
+		    storage.setItem('isout','0');
+			$('loginForm').submit(function(data) {
+                var obj = JSON.parse(data);
+                if(obj.result=="1"){
+                  storage.setItem('sys_userAccount',obj.userAccount);
+				  storage.setItem('sys_sys_userId',obj.userId);
+				  storage.setItem('sys_orgId',obj.orgId);
+				  storage.setItem('sys_domainId',obj.domainId);
+				  storage.setItem('sys_userName',obj.userName);
+				  storage.setItem('sys_orgName',obj.orgName);
+				  storage.setItem('sys_orgShortName',obj.orgShortName);
+				  storage.setItem('sys_orgIdString',obj.orgIdString);
+				  storage.setItem('sys_orgSimpleName',obj.orgSimpleName);
+				  storage.setItem('sys_userSimpleName',obj.userSimpleName);
+				  storage.setItem('sys_fileType',obj.fileType);
+				  storage.setItem('sys_fileserver',obj.fileserver);
+				  storage.setItem('sys_httpserver',obj.httpserver);
+				  storage.setItem('sys_server',obj.server);
+				  storage.setItem('serverUrl',obj.server);
+				  storage.setItem('webServiceUrl',obj.webServiceUrl);
+				  storage.setItem('sys_key',obj.key);
+				  storage.setItem('picPath',obj.picPath);
+				  if(obj.sys_photoName!=''){
+				     storage.setItem('sys_photoName', evoUrl+'/ezOffice/imges/peopleinfo/'+obj.sys_photoName);
+				  }else{
+				     storage.setItem('sys_photoName', '');
+				  }
+				  storage.setItem('sys_phone',obj.sys_phone);
+				  storage.setItem('sys_empDuty',obj.sys_empDuty);
+				  storage.setItem('sys_location',obj.sys_location);
+				  storage.setItem('sys_evoword',obj.sys_evoword);
+				  storage.setItem('sys_oaPdf',obj.sys_oaPdf);
+				  storage.setItem('ezMobile_dbName',dbName);
+				  var isCreateDB = storage.getItem('isCreateDB');
+				  //hint(isCreateDB);
+				  if(isCreateDB==null||isCreateDB==''||isCreateDB=='null'){
+				       //alert(isCreateDB);
+				       initDB();
+				  }
+				  setCustMenuDB(obj.menuData);
+				  setMyTopOrg(obj.myTopOrg);
+				  //记住密码或者自动登录都保存账号密码
+				  if($('remember').checked || $('loginset').checked){
+				     storage.setItem('login_userAccount',$('username').value);
+				     storage.setItem('login_password',$('password').value);
+				  }else{
+				     storage.setItem('login_userAccount','');
+				     storage.setItem('login_password','');
+				  }
+				  if($('remember').checked){
+				    storage.setItem('login_remember','true');
+				  }else{
+				    storage.setItem('login_remember','false');
+				  }
+				  if($('loginset').checked){
+				     storage.setItem('autologin','true');
+				  }else{
+				     storage.setItem('autologin','false');
+				  }
+				   var sessionStorage = $phone.sessionStorage();   //客户端session，存储是否已经 
+                   sessionStorage.setItem('imag_applist_json', data);
+			       $page.open('desktop.xml?showTab=pubtab', {animation:'right-to-left',target:'_self'});
+				}else{
+				  alert(obj.description);
+				}
+            }, function(error) {
+			    if (error == 'timeout') {
+			        hint('连接服务器超时！');
+			    } else if (error == '404') {
+			        hint('链接超时重新登录！');
+			    } else if (error == '500') {
+			        hint('内部服务器错误！');
+			    } else {
+			        hint('访问网络错误！错误代码:' + error);
+			    }
+		    });
+
+		}
+		
+		function setCustMenuDB(obj){
+		    var db = $phone.openDatabase(dbName);
+		    db.transaction(populateDB);
+		    function populateDB(tx) {
+		        tx.executeSql('delete from custmenu');
+		        
+		        if(obj.data instanceof Array){
+			        for(var i=0; i<obj.data.length; i++){
+	
+			          tx.executeSql('INSERT INTO custmenu (mobileMenuCode,mobileMenuDisplayName,imgName,isSystem,cusMenuId,webUrl,showImg) '+
+			          ' VALUES ("'+obj.data[i].mobileMenuCode+'","'+obj.data[i].mobileMenuDisplayName+'","'+obj.data[i].imgName+'","'+obj.data[i].isSystem+'","'+obj.data[i].cusMenuId+'","'+obj.data[i].webUrl+'","'+obj.data[i].showImg+'")');
+			        }
+		        }else if(obj.data.mobilemenu instanceof Object){
+		            tx.executeSql('INSERT INTO custmenu (mobileMenuCode,mobileMenuDisplayName,imgName,isSystem,cusMenuId,showImg) '+
+			          ' VALUES ("'+obj.data.mobilemenu.mobileMenuCode+'","'+obj.data.mobilemenu.mobileMenuDisplayName+'","'+obj.data.mobilemenu.imgName+'","'+obj.data.mobilemenu.isSystem+'","'+obj.data.mobilemenu.cusMenuId+'","'+obj.data.mobilemenu.webUrl+'","'+obj.data.mobilemenu.showImg+'")');
+		        }
+		    }
+		}
+		function setMyTopOrg(obj){
+		    var db = $phone.openDatabase(dbName);
+		    db.transaction(populateDB);
+		    function populateDB(tx) {
+		        tx.executeSql('delete from myTopOrg');
+		        var persondata = obj.data.list;
+		        if(persondata instanceof Array){
+			        for(var i=0;i<persondata.length;i++){
+			          var orgId = persondata[i].orgId;
+				      var orgName = persondata[i].orgName;
+	
+			          tx.executeSql('INSERT INTO myTopOrg (orgId,orgName) VALUES ("'+orgId+'","'+orgName+'")');
+			        }
+		        }else if(persondata instanceof Object){
+		            var orgId = persondata.orgId;
+			        var orgName = persondata.orgName;
+
+		            tx.executeSql('INSERT INTO myTopOrg (orgId,orgName) VALUES ("'+orgId+'","'+orgName+'")');
+		        }
+		    }
+		}
+	    
+		
+		function getusernamefocus(){
+		  $('icon_username').src="login_user.png";
+		}
+		function lostusernamefocus(){
+		  $('icon_username').src="login_user_g.png";
+		}
+		function getpasswordfocus(){
+		  $('icon_password').src="login_psd.png";
+		}
+		function lostpasswordfocus(){
+		  $('icon_password').src="login_psd_g.png";
+		}
+		
+		
+		function clearlogin() {
+            var dlg = $page.waiting("正在清理缓存...");
+            var dbName = storage.getItem('ezMobile_dbName');
+            var db = $phone.openDatabase(dbName);
+		    db.transaction(query_clearDB, function(err){alert(err);}, function(){});
+		      storage.clear();
+              dlg.close();
+            
+        }
+        function query_clearDB(tx) {
+	        tx.executeSql('DROP TABLE IF EXISTS myInfoChannel');
+	        tx.executeSql('DROP TABLE IF EXISTS custmenu');
+	        tx.executeSql('DROP TABLE IF EXISTS myApp');
+	        tx.executeSql('DROP TABLE IF EXISTS myTopOrg');
+	        tx.executeSql('DROP TABLE IF EXISTS workflow_list');
+	        tx.executeSql('DROP TABLE IF EXISTS linkManclass');
+	        tx.executeSql('DROP TABLE IF EXISTS linkMan');
+	        tx.executeSql('DROP TABLE IF EXISTS groupList');
+	        
+	        tx.executeSql('DROP TABLE IF EXISTS offLineOrgList');
+	        tx.executeSql('DROP TABLE IF EXISTS offLineUserList');
+	    }
+	    
+	    function setLoginSetTmp(){
+           if($('loginset').checked){
+              storage.setItem('autologin',"true");
+           }else{
+              storage.setItem('autologin',"false");
+           }
+        }
+        
+        //物理返回直接退出
+        function physicalReturn(){
+	       exit();
+	    }
+            
+    ]]>
+    </script> 
+	<page include="md5.js" type="home">
+        <title style="background:#3DAFFE" hidesBackButton="true">
+           <center>
+              <icon src="" style="align:center;" id="lognImg"/>
+		   </center>
+        </title>
+	   <content style="margin:0 5;background:#ffffff" >
+			<form  id="loginForm" style="margin: 0 20; margin-top: 75%;" prompt="用户登录|正在进入移动办公">
+				<input type="hidden" id="deviceId" name="deviceId" value=""/>
+				<input type="hidden" id="platform" name="platform" value=""/>
+				<input type="hidden" id="versionCode" name="versionCode" value=""/>
+				<input type="hidden" id="appCode" name="appCode" value=""/>
+				<input type="hidden" id="evoUrl" name="evoUrl" value=""/>
+				<list id="myphotoimg_list" type="transparent" style="height:136">
+				</list>
+				<list style="background:#f8f8f8">
+					<item style="col-width:100,*;background:#f8f8f8;height:40">
+						<col><row><icon id="icon_username" src="login_user_g.png" style="align:center;width:45;height:45;margin-right:42"/></row></col>
+	                    <col><row><input type="text" onfocus="getusernamefocus();" onblur="lostusernamefocus();" 
+	                    style="background:null;font-size:16;color:#555555" id="username" name="username" placeholder="用户名"/></row></col>
+	                </item>
+	                <item style="col-width:100,*;background:#f8f8f8;height:40">
+	                    <col><input type="hidden" id="mdPass" name="mdPass"/>
+	                    <row><icon id="icon_password" src="login_psd_g.png" style="col-width:50,*;align:center;width:45;height:45;margin-right:42"/></row></col>
+	                    <col><row><input type="password" onfocus="getpasswordfocus();" onblur="lostpasswordfocus();" 
+	                    style="background:null;font-size:16;color:#555555" id="password"  placeholder="密码"/></row></col>
+	                </item>
+	            </list>
+				<list type="transparent">	
+				   <item style="height:27">
+					    <col>
+					      <row>
+					         <checkbox style="align:right;color:#38adff;" 
+					         id="remember" name="remember" value="true" disabled="false">记住密码</checkbox>
+					         <checkbox style="align:right;color:#38adff;" 
+					         id="loginset" name="loginset" value="true" disabled="false">自动登录</checkbox>
+					      </row>
+					    </col>
+				   </item>
+				   <item>
+						<row><button style="align:center;background:#38adff,#007aff;color:#F0F9FF,white;border:0;
+						corner-radius:3;width:300;height:40;font-size:18;font-weight:bold;" onclick="logon();">登  录</button></row>
+					</item>
+			    </list>
+				
+			</form>
+		</content>
+	</page>
+</imag>

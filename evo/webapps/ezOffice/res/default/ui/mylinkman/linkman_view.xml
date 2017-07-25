@@ -133,7 +133,7 @@
 			$page.browseImage({
 				complete: function(path) {
 				   $("picRow").remove($('empLivingPhoto'));
-				   var iconRow = $C('<icon src="'+path+'" effect="round" style="height:35;width:35;" id="emplivingphoto"/>');
+				   var iconRow = $C('<icon src="'+path+'" effect="round" style="height:35;width:35;" id="empLivingPhoto"/>');
 		           $("picRow").add(iconRow);
 				   $('photo').value = path;
 		        },
