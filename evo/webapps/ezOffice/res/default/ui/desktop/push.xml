@@ -1,0 +1,180 @@
+<?xml version="1.0" encoding="utf-8"?>
+<imag>
+	<script>
+        <![CDATA[
+            var storage = $phone.localStorage();
+            var pass = storage.getItem('sys_password');
+            var evoUrl = storage.getItem('evoUrl');
+            $page.onload=function(){
+            	load();
+            }
+            function load(){
+            	$http.progress({src:'loading.gif',text:''}).post(evoUrl+'/ezOffice/set/getRemindInfo.do',{},function(data){
+				    var obj = JSON.parse(data);
+				    if(obj.logonerror &&obj.logonerror=='1'){
+			         		alert("该账号已在设备"+obj.deviceId+"上登录");
+		          			$page.open('../index.xml',{target:'_self'});
+		                    return;
+		            }
+					var result = obj.message.result;
+					if(result=='1'){
+						var forbidmodule = obj.data.forbidmodule;
+						if(forbidmodule!=null && forbidmodule!=''){
+							if(forbidmodule.indexOf("workflow") !=-1){
+								$('workflow').checked=false;
+							}
+							if(forbidmodule.indexOf("mail") !=-1){
+								$('mail').checked=false;
+							}
+							if(forbidmodule.indexOf("govdocument") !=-1){
+								$('govdocument').checked=false;
+							}
+							if(forbidmodule.indexOf("information") !=-1){
+								$('information').checked=false;
+							}
+							if(forbidmodule.indexOf("newMeeting") !=-1){
+								$('newMeeting').checked=false;
+							}
+							if(forbidmodule.indexOf("newKq") !=-1){
+								$('newKq').checked=false;
+							}
+							if(forbidmodule.indexOf("workReport") !=-1){
+								$('workReport').checked=false;
+							}
+							if(forbidmodule.indexOf("questionnaire") !=-1){
+								$('questionnaire').checked=false;
+							}
+						}
+					}
+				},function(error) {
+					toErro(error);
+				});
+            }
+           
+            function send(){
+            	var forbidmodule="";
+            	if(!$('workflow').checked){
+            		forbidmodule=forbidmodule+"workflow,";
+            	}
+            	if(!$('mail').checked){
+            		forbidmodule=forbidmodule+"mail,";
+            	}
+            	if(!$('govdocument').checked){
+            		forbidmodule=forbidmodule+"govdocument,";
+            	}
+            	if(!$('information').checked){
+            		forbidmodule=forbidmodule+"information,";
+            	}
+            	if(!$('newMeeting').checked){
+            		forbidmodule=forbidmodule+"newMeeting,";
+            	}
+            	if(!$('newKq').checked){
+            		forbidmodule=forbidmodule+"newKq,";
+            	}
+            	if(!$('workReport').checked){
+            		forbidmodule=forbidmodule+"workReport,";
+            	}
+            	if(!$('questionnaire').checked){
+            		forbidmodule=forbidmodule+"questionnaire,";
+            	}
+            	forbidmodule = forbidmodule.substring(0,(forbidmodule.length-1));
+            	$http.post(evoUrl+'/ezOffice/set/saveRemind.do',
+            		{forbidmodule:forbidmodule}, function(data){
+				    var obj = JSON.parse(data);
+				    if(obj.logonerror &&obj.logonerror=='1'){
+			            alert("该账号已在设备"+obj.deviceId+"上登录");
+		          		$page.open('../index.xml',{target:'_self'});
+		                return;
+		            }
+					var result = obj.message.result;
+					if(result=='0'){
+						hint(obj.message.description);
+					}else{
+						hint('更新推送设置信息成功！');
+						$page.close();
+					}
+				},function(error) {
+					toErro(error);
+				});
+            }
+            function toErro(error){
+			if (error == 'timeout') {
+				hint('连接服务器超时！');
+			} else if (error == '404') {
+				hint('链接超时重新登录！');
+			} else if (error == '500') {
+				hint('内部服务器错误！');
+			} else {
+				hint('访问网络错误！错误代码:' + error);
+			}
+			$page.open('../index.xml',{animation:'down-to-up'});
+		}
+   		]]>
+    </script>
+    <page>
+       <title style="background:#38adff;tint-color:#ffffff">
+            <left>
+                <button role="back"></button>
+            </left>
+            <center>
+                <label>推送开关</label>
+            </center>
+            <right>
+                <button onclick="send();" style="font-size:18;font-weight:bold">完成</button>
+            </right>
+        </title>
+        <content>
+            <list>
+                <item style="background:#f0eff5;"></item>
+                <item>
+                   <row>
+                   	   <label style="font-color:#555555;font-size:16;">待办文件提醒</label>
+                       <checkbox type="switch" id="workflow" checked="true" style="align:right;"></checkbox>
+                   </row>
+                </item>
+                <item>
+                   <row>
+                   	   <label style="font-color:#555555;font-size:16;">新邮件提醒</label>
+                       <checkbox type="switch" id="mail" checked="true" style="align:right;"></checkbox>
+                   </row>
+                </item>
+                <item>
+                   <row>
+                   	   <label style="font-color:#555555;font-size:16;">新收文推送提醒</label>
+                       <checkbox type="switch" id="govdocument" checked="true" style="align:right;"></checkbox>
+                   </row>
+                </item>
+               <item>
+                   <row>
+                   	   <label style="font-color:#555555;font-size:16;">新汇报推送提醒</label>
+                       <checkbox type="switch" id="workReport" checked="true" style="align:right;"></checkbox>
+                   </row>
+                </item>
+                <item>
+                   <row>
+                   	   <label style="font-color:#555555;font-size:16;">信息推送提醒</label>
+                       <checkbox type="switch" id="information" checked="true" style="align:right;"></checkbox>
+                   </row>
+                </item>
+                <item>
+                   <row>
+                   	   <label style="font-color:#555555;font-size:16;">会议推送提醒</label>
+                       <checkbox type="switch" id="newMeeting" checked="true" style="align:right;"></checkbox>
+                   </row>
+                </item>
+                <item>
+                   <row>
+                   	   <label style="font-color:#555555;font-size:16;">考勤推送提醒</label>
+                       <checkbox type="switch" id="newKq" checked="true" style="align:right;"></checkbox>
+                   </row>
+                </item>
+                <item>
+                   <row>
+                   	   <label style="font-color:#555555;font-size:16;">问卷调查提醒</label>
+                       <checkbox type="switch" id="questionnaire" checked="true" style="align:right;"></checkbox>
+                   </row>
+                </item>
+            </list>
+        </content>
+    </page>
+</imag>

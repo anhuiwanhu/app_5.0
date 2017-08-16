@@ -72,7 +72,87 @@
 		         	$('test_web').src = h5ip+'/worklog/writeLog.controller?logType=0&loadFlag=1&code='+code+'&fromPage=evo';
 		         }else if(toNewMenu=='push_detail'){
 		         	topushdetail(h5ip,code);
-		         }else if(toNewMenu == null||toNewMenu==''){
+		         }else if(toNewMenu=='fromOriginalBack'){  //退回
+		            var back_workId=$param['back_workId'];
+					var back_empLivingPhoto=$param['back_empLivingPhoto'];
+					var back_worktitle=$param['back_worktitle'];
+					var back_workcurstep=$param['back_workcurstep'];
+					var back_worksubmittime=$param['back_worksubmittime'];
+					var back_workStatus=$param['back_workStatus'];
+					var back_tableId=$param['back_tableId'];
+					var back_recordId=$param['back_recordId'];
+					var back_stepCount=$param['back_stepCount'];
+					var back_forkId=$param['back_forkId'];
+					var back_forkStepCount=$param['back_forkStepCount'];
+					var back_isForkTask=$param['back_isForkTask'];
+					var back_curCommField=$param['back_curCommField'];
+					$('test_web').src = h5ip+'/workflow/back.controller?'+
+					'workId='+back_workId+
+			    	'&empLivingPhoto='+back_empLivingPhoto+
+			    	'&worktitle='+back_worktitle+
+			    	'&workcurstep='+back_workcurstep+
+			        '&worksubmittime='+back_worksubmittime+
+			        '&workStatus='+back_workStatus+
+				    '&tableId='+back_tableId+
+				    '&recordId='+back_recordId+
+				    '&stepCount='+back_stepCount+
+				    '&forkId='+back_forkId+
+				    '&forkStepCount='+back_forkStepCount+
+				    '&isForkTask='+back_isForkTask+
+				    '&curCommField='+back_curCommField+
+					'&code='+code+'&fromPage=evo';
+				 }else if(toNewMenu=='fromOriginalTranInfo'){  //转办
+				 	 var workId=$param['workId'];
+					 var empLivingPhoto=$param['empLivingPhoto'];
+					 var worktitle=$param['worktitle'];
+					 var workcurstep=$param['workcurstep'];
+					 var worksubmittime=$param['worksubmittime'];
+					 var workStatus=$param['workStatus'];
+				     var comment_tran =$param['comment_tran'];;
+				    $('test_web').src = h5ip+'/dealfile/tranInfo.controller?'+
+					'workId='+workId+
+			    	'&empLivingPhoto='+empLivingPhoto+
+			    	'&worktitle='+worktitle+
+			    	'&workcurstep='+workcurstep+
+			        '&worksubmittime='+worksubmittime+
+			        '&workStatus='+workStatus+
+				    '&comment_tran='+comment_tran+
+					'&code='+code+'&fromPage=evo';
+				  }else if(toNewMenu=='fromOriginalAddSign'){  //加签
+				 	 var workId=$param['workId'];
+					 var empLivingPhoto=$param['empLivingPhoto'];
+					 var worktitle=$param['worktitle'];
+					 var workcurstep=$param['workcurstep'];
+					 var worksubmittime=$param['worksubmittime'];
+					 var workStatus=$param['workStatus'];
+				     var comment_tran =$param['comment_tran'];;
+				    $('test_web').src = h5ip+'/dealfile/addSign.controller?'+
+					'workId='+workId+
+			    	'&empLivingPhoto='+empLivingPhoto+
+			    	'&worktitle='+worktitle+
+			    	'&workcurstep='+workcurstep+
+			        '&worksubmittime='+worksubmittime+
+			        '&workStatus='+workStatus+
+				    '&comment_tran='+comment_tran+
+					'&code='+code+'&fromPage=evo';
+				   }else if(toNewMenu=='fromOriginalSelfsend'){  //转发
+				 	 var workId=$param['workId'];
+					 var empLivingPhoto=$param['empLivingPhoto'];
+					 var worktitle=$param['worktitle'];
+					 var workcurstep=$param['workcurstep'];
+					 var worksubmittime=$param['worksubmittime'];
+					 var workStatus=$param['workStatus'];
+				     var comment_tran =$param['comment_tran'];;
+				    $('test_web').src = h5ip+'/dealfile/selfSend.controller?'+
+					'workId='+workId+
+			    	'&empLivingPhoto='+empLivingPhoto+
+			    	'&worktitle='+worktitle+
+			    	'&workcurstep='+workcurstep+
+			        '&worksubmittime='+worksubmittime+
+			        '&workStatus='+workStatus+
+				    '&comment_tran='+comment_tran+
+					'&code='+code+'&fromPage=evo';
+		          }else if(toNewMenu == null||toNewMenu==''){
 		            todetail(h5ip,code);   //详情
 		         }
 			},function(error) {
@@ -108,12 +188,19 @@
 				$('test_web').src = h5ip+"/report/index.controller"+'?code='+code;
 			}else if(type == 'newMeeting'){
 				$('test_web').src = h5ip+"/newmeeting/meetingNoticeList.controller"+'?code='+code;
+			}else if(type == 'questionnaire'){
+				$('test_web').src = h5ip+"/naire/getAnswerQuestionnaireList.controller"+'?code='+code;
 			}
 		}
 		
 		function topushdetail(h5ip,code){
-			var paramstring	= $param['paramstring'];
-			$('test_web').src = h5ip+paramstring+'?code='+code;
+			var paramstring = storage.getItem('push_params');
+			var newkq = storage.getItem('push_newKq');
+			if(newkq=='0'){
+				$('test_web').src = h5ip+'/'+paramstring+'?code='+code;
+			}else{
+				$('test_web').src = h5ip+'/'+paramstring+'&code='+code;
+			}
 		}
 		
 		function todetail(h5ip,code){
@@ -306,6 +393,8 @@
 		}
 		function toOriginal(){
 			$page.open('dealfile/dealfile_process_original.xml?workId='+g_workId, {animation:'right-to-left'});
+		//	$page.open('dealfile/dealfile_sendDoc_process_original.xml?workId='+g_workId, {animation:'right-to-left'});
+		  //  $page.open('dealfile/dealfile_processed_original.xml?workId='+g_workId, {animation:'right-to-left'});
 		}
 		
 		
@@ -342,7 +431,7 @@
     </script>
     <page style="background:white" onback="goBack();">
         <title>
-            <left>
+           <left>
                 <button onclick="goBack();" id="buttonback"  icon="mail_back.png" style="display:none;"/>
                 <button role="back" onclick="$page.close(0);" id="buttonclose" style="margin-left:-2;">关闭</button>
             </left>
@@ -355,6 +444,9 @@
         </title>
         <content>
             <web id="test_web" include="uploadPreview.min.js" src="" progress="true" userAgent="evo/v5.0" style="progress-color:gray;"/>
+             <form id="sendPdf" multipart="true" prompt="" >
+            	<input type="file" id="pdfatt" style="display:none;" value="" name="pdfatt"/>
+            </form>  
         </content>
     </page>
 </imag>

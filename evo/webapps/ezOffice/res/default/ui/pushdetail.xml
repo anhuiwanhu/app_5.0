@@ -1,0 +1,172 @@
+<?xml version="1.0" encoding="utf-8"?>
+<imag>
+    <script>
+	    <![CDATA[
+	        var storage = $phone.localStorage();
+	        var evoUrl = storage.getItem('evoUrl');
+	        var module = storage.getItem('push_module');
+        	var title = storage.getItem('push_title');
+        	$page.onload=function(){
+				$('pushtitle').text = title+"推送";
+            }
+            
+            $page.onactive = function() {   //进入页面，或者返回到此页面出发的方法。
+			   refresh();
+			}
+            
+            function refresh(){
+            	$http.post(evoUrl+'/ezOffice/desktop/getPushResult.do',{module:module}, function(data) {
+	                 var obj = JSON.parse(data); 
+	                 if(obj.logonerror && obj.logonerror=='1'){
+			          	alert("该账号已在设备"+obj.deviceId+"上登录");
+			          	storage.setItem('isout','1');
+			            $page.open('index.xml',{target:'_self'});
+			            return;
+			         }
+	                 var result = obj.result;
+	                 var items = [];
+	                 if(result =="1"){
+						var menulist = obj.menu;
+						if(menulist instanceof Array){
+							for(var i=0;i<menulist.length;i++){
+								items.push(creatPush(menulist[i]));
+							}
+						}else if(menulist instanceof Object){
+							items.push(creatPush(menulist));
+						}
+						$('pushlist').update({items: items});
+						$('indexContent').hideTop();	
+					 }
+				},function(error) {
+				    toErro(error);
+			    });
+            }
+            
+            function creatPush(menu){
+            	var id = menu.id;
+	        	var title = menu.title;
+	        	var paramstring = menu.paramstring;
+	        	var isread = menu.isread;
+	        	var readsrc = '';
+	        	if(isread=='0'){
+	        	    readsrc = 'mail_unread.png';
+	        	}else{
+	        		readsrc = 'mail_read.png';
+	        	}
+	        	var itemJson = {
+		            template :0,
+		            onclick : 'pushview("'+id+'","'+paramstring+'");',
+		            widgets : {
+		                unRead:{src:readsrc},
+		                title : {text:title}
+		            }
+		        }
+		       return itemJson;
+            }
+            
+            function pushview(id,paramstring){
+            	$http.post(evoUrl+'/ezOffice/desktop/updateNum.do',{id:id}, function(data) {
+	                 var obj = JSON.parse(data);
+	                 if(obj.logonerror && obj.logonerror=='1'){
+			          	alert("该账号已在设备"+obj.deviceId+"上登录");
+			          	storage.setItem('isout','1');
+			            $page.open('index.xml',{target:'_self'});
+			            return;
+			         }
+			         var bagenum = obj.bagenum;
+			         badgeNum(bagenum);
+	                 storage.setItem('desktop_toNewMenu','push_detail');
+	                 storage.setItem('push_params',paramstring);
+	                 if(module=='newKq'){
+	                 	storage.setItem('push_newKq','0');
+	                 }else{
+	                 	storage.setItem('push_newKq','1');
+	                 }
+           	    	 $page.open('toH5Menu.xml?desktop_toNewMenu=push_detail', {animation:'right-to-left'});
+				},function(error) {
+				    toErro(error);
+			    });
+            }
+            
+            function updateAll(){
+            	$http.post(evoUrl+'/ezOffice/desktop/updateAllNum.do',{module:module}, function(data) {
+	                 var obj = JSON.parse(data);
+	                 if(obj.logonerror && obj.logonerror=='1'){
+			          	alert("该账号已在设备"+obj.deviceId+"上登录");
+			          	storage.setItem('isout','1');
+			            $page.open('index.xml',{target:'_self'});
+			            return;
+			         }
+			         var bagenum = obj.bagenum;
+			         badgeNum(bagenum);
+	                 refresh();
+				},function(error) {
+				    toErro(error);
+			    });
+            }
+            
+            function badgeNum(num){
+			   var shortCutBadge = $phone.plugin("ImagShortCutBadge");
+			   shortCutBadge.setBadgeNum(parseInt(num));
+			}
+            
+			function toErro(error){
+				if (error == 'timeout') {
+					hint('连接服务器超时！');
+				} else if (error == '404') {
+					hint('链接超时重新登录！');
+				} else if (error == '500') {
+					hint('内部服务器错误！');
+				} else {
+					hint('访问网络错误！错误代码:' + error);
+				}
+				storage.setItem('isout','1');
+				$page.open('../index.xml',{animation:'down-to-up'});
+			}
+	     ]]>
+    </script> 
+    <page>
+       <title style="background:#3daffe;tint-color:white">
+            <left>
+                <button role="back"></button>
+            </left>
+            <center>
+                <label id="pushtitle"></label>
+            </center>
+        </title>
+        <content id="indexContent" draggable="true" ondragdown="refresh();" >
+            <list id="pushlist" reuse="true">
+                <item style="col-width:25,*">
+                    <col>
+                    	<icon reusekey="unRead" src="" style="width:10;height:10"></icon>
+                    </col>
+                    <col>
+                    	<label reusekey="title" style="color:#555555;font-size:16"></label>
+                    </col>
+                </item>
+            </list>
+            <bottom id="bottom" style="background:#ffffff;">
+	            <list>
+	                <item>
+	                    <row>
+	                        <label style="align:center;color:#b8b8b8;font-size:12">系统仅保留30天记录</label>
+	                    </row>
+	                </item>
+	            </list>
+	        </bottom>
+        </content>
+        <footer id="foot" style="background:#ffffff;">
+            <list>
+                <item style="background:#f0eff5;padding:1;border:1 #f0eff5;" >
+			           <col>
+					   </col>
+	             </item>
+                <item>
+                    <row>
+		                <button onclick="updateAll();" style="align:center;color:#3daffe;font-size:18;height:50;border:0 white;">全部标记已读</button>
+		            </row>
+                </item>
+            </list>
+        </footer>
+    </page>
+</imag>
